@@ -22,9 +22,10 @@ services:
       - wal_buffers=2MB
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-valimail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-valimail}
       POSTGRES_DB: ${POSTGRES_DB:-valimail}
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5433"
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
       - valimail_pg_data:/var/lib/postgresql/data
     healthcheck:
