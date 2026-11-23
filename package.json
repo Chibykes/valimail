@@ -10,7 +10,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "docker:up": "docker compose -f docker-compose.local.yml up -d --build",
+    "docker:down": "docker compose -f docker-compose.local.yml down"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.10.7",
