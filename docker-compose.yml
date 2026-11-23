@@ -3,14 +3,19 @@ services:
     image: postgres:16-alpine
     ports:
       - "5432:5432"
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-valimail}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-valimail}
       POSTGRES_DB: ${POSTGRES_DB:-valimail}
     volumes:
       - valimail_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-valimail} -d ${POSTGRES_DB:-valimail}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-valimail} -d ${POSTGRES_DB:-valimail}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
