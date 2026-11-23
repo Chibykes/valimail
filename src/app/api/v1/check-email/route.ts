@@ -3,6 +3,22 @@ import { ApiErrorHelper } from "@/helpers/api-error";
 import { AuthError, requireAuth } from "@/lib/auth/protect";
 import { ValidationService } from "@/services/validation";
 
+export async function GET() {
+  try {
+    const authContext = await requireAuth();
+    const result = await ValidationService.listRecent({
+      clerkId: authContext.clerkId,
+      emailAddress: authContext.email,
+    });
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return ApiErrorHelper.unauthorized(error.message);
+    }
+    return ApiErrorHelper.json(error, 500, "Failed to load recent checks");
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authContext = await requireAuth();

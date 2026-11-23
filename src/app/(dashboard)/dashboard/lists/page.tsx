@@ -1,17 +1,19 @@
-import { BulkUploadForm } from "@/components/dashboard/bulk-upload-form";
+import { ListChecks } from "lucide-react";
+import { BulkComposer } from "@/components/dashboard/bulk-composer";
+import { DashboardHero } from "@/components/dashboard/dashboard-hero";
+import { MyLists } from "@/components/dashboard/my-lists";
 
 export default function DashboardListsPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-3xl text-slate-900">
-          Bulk lists
-        </h1>
-        <p className="mt-1 text-slate-600">
-          Paste emails or upload a .txt / .csv file to start a bulk job.
-        </p>
-      </div>
-      <BulkUploadForm />
-    </div>
+    <>
+      <DashboardHero
+        icon={ListChecks}
+        title="List validation"
+        description="Validate multiple email addresses at once and export the results"
+      >
+        <BulkComposer />
+      </DashboardHero>
+      <MyLists />
+    </>
   );
 }

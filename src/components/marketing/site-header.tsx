@@ -1,40 +1,55 @@
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Show, UserButton } from "@clerk/nextjs";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { MARKETING_NAV } from "@/constants/navigation";
 import { AppRoutes } from "@/constants/routes";
 
 export function SiteHeader() {
   return (
-    <header className="relative z-10 flex items-center justify-between px-6 py-5 md:px-10">
-      <Link
-        href={AppRoutes.HOME}
-        className="font-[family-name:var(--font-display)] text-xl tracking-tight text-slate-900"
-      >
-        Valimail
-      </Link>
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5">
+        <Logo />
 
-      <div className="flex items-center gap-2">
-        <Suspense fallback={null}>
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <Button variant="ghost" size="sm">
-                Sign in
+        <nav className="hidden items-center gap-1 md:flex">
+          {MARKETING_NAV.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <Suspense fallback={<div className="h-9 w-40" />}>
+            <Show when="signed-out">
+              <Button asChild variant="ghost" className="h-9 rounded-full px-4">
+                <Link href={AppRoutes.SIGN_IN}>Sign in</Link>
               </Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <Button size="sm" className="bg-teal-700 hover:bg-teal-800">
-                Sign up
+              <Button
+                asChild
+                className="h-9 rounded-full px-4 shadow-[0_6px_20px_-6px] shadow-brand-600/60"
+              >
+                <Link href={AppRoutes.SIGN_UP}>
+                  Get started <ArrowRight />
+                </Link>
               </Button>
-            </SignUpButton>
-          </Show>
-          <Show when="signed-in">
-            <Button asChild variant="ghost" size="sm">
-              <Link href={AppRoutes.DASHBOARD_SINGLE}>Dashboard</Link>
-            </Button>
-            <UserButton />
-          </Show>
-        </Suspense>
+            </Show>
+            <Show when="signed-in">
+              <Button asChild className="h-9 rounded-full px-4">
+                <Link href={AppRoutes.DASHBOARD}>
+                  Dashboard <ArrowRight />
+                </Link>
+              </Button>
+              <UserButton />
+            </Show>
+          </Suspense>
+        </div>
       </div>
     </header>
   );

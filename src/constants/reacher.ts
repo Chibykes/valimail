@@ -6,6 +6,8 @@ export const ReacherPaths = {
   bulkResults: (jobId: string) => `/v1/bulk/${jobId}/results`,
 } as const;
 
+export const REACHER_RESULTS_PAGE_SIZE = 500;
+
 export const ReacherHeaders = {
   SECRET: "x-reacher-secret",
 } as const;

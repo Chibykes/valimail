@@ -11,4 +11,19 @@ export class ValidationCheckRepository {
   }) {
     return prisma.validationCheck.create({ data });
   }
+
+  static async listForUser(userId: string, take: number) {
+    return prisma.validationCheck.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take,
+      select: {
+        id: true,
+        email: true,
+        isReachable: true,
+        source: true,
+        createdAt: true,
+      },
+    });
+  }
 }

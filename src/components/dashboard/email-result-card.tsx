@@ -1,103 +1,83 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
+import { ResultPanel } from "@/components/shared/result-panel";
+import { Button } from "@/components/ui/button";
 import { ReachableHelper } from "@/helpers/reachable";
+import { ResultSignalsHelper } from "@/helpers/result-signals";
 import type { CheckEmailResponse } from "@/types/api";
 
-type Props = {
-  data: CheckEmailResponse;
-};
-
-export function EmailResultCard({ data }: Props) {
-  const status = ReachableHelper.normalize(data.isReachable);
+export function EmailResultCard({ data }: { data: CheckEmailResponse }) {
   const { result } = data;
+  const records = result.mx?.records ?? [];
+
+  async function copyJson() {
+    await navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+    toast.success("Raw result copied");
+  }
 
   return (
-    <Card className="border-slate-200 shadow-sm">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle className="font-display text-xl text-slate-900">
-              {data.email}
-            </CardTitle>
-            <CardDescription>
-              Source {data.source.toUpperCase()} · check {data.checkId.slice(0, 8)}
-            </CardDescription>
-          </div>
-          <Badge variant={ReachableHelper.badgeVariant(status)}>
-            {ReachableHelper.label(status)}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4 text-sm text-slate-700">
-        <DetailBlock
-          title="Syntax"
-          items={[
-            ["Valid", String(result.syntax?.is_valid_syntax ?? "—")],
-            ["Username", result.syntax?.username ?? "—"],
-            ["Domain", result.syntax?.domain ?? "—"],
-          ]}
+    <div className="grid animate-fade-up gap-4 md:grid-cols-[1.4fr_1fr]">
+      <div className="rounded-2xl border border-border bg-background p-6">
+        <ResultPanel
+          data={{
+            email: data.email,
+            status: data.isReachable,
+            score: ReachableHelper.score(result),
+            signals: ResultSignalsHelper.fromResult(result),
+          }}
         />
-        <Separator />
-        <DetailBlock
-          title="MX"
-          items={[
-            ["Accepts mail", String(result.mx?.accepts_mail ?? "—")],
-            ["Records", (result.mx?.records ?? []).join(", ") || "—"],
-          ]}
-        />
-        <Separator />
-        <DetailBlock
-          title="SMTP"
-          items={[
-            ["Deliverable", String(result.smtp?.is_deliverable ?? "—")],
-            ["Can connect", String(result.smtp?.can_connect_smtp ?? "—")],
-            ["Catch-all", String(result.smtp?.is_catch_all ?? "—")],
-            ["Disabled", String(result.smtp?.is_disabled ?? "—")],
-          ]}
-        />
-        <Separator />
-        <DetailBlock
-          title="Misc"
-          items={[
-            ["Disposable", String(result.misc?.is_disposable ?? "—")],
-            ["Role account", String(result.misc?.is_role_account ?? "—")],
-            ["Bounced", String(result.misc?.is_bounced ?? "—")],
-          ]}
-        />
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="space-y-4">
+        <DetailCard title="Address">
+          <DetailRow label="Username" value={result.syntax?.username ?? "—"} />
+          <DetailRow label="Domain" value={result.syntax?.domain ?? "—"} />
+        </DetailCard>
+
+        <DetailCard title={`Mail servers · ${records.length}`}>
+          {records.length ? (
+            <ul className="space-y-1.5">
+              {records.slice(0, 5).map((record) => (
+                <li key={record} className="truncate font-mono text-xs text-muted-foreground">
+                  {record}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-muted-foreground">No MX records found</p>
+          )}
+        </DetailCard>
+
+        <DetailCard title="Verification">
+          <DetailRow label="Engine" value={`Reacher ${data.source.toUpperCase()}`} />
+          <DetailRow label="Check ID" value={data.checkId.slice(0, 10)} mono />
+          <Button variant="outline" size="sm" className="mt-2 w-full" onClick={copyJson}>
+            <Copy /> Copy raw JSON
+          </Button>
+        </DetailCard>
+      </div>
+    </div>
   );
 }
 
-function DetailBlock({
-  title,
-  items,
-}: {
-  title: string;
-  items: [string, string][];
-}) {
+function DetailCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h3 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+    <div className="rounded-2xl border border-border bg-background p-4">
+      <p className="mb-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
         {title}
-      </h3>
-      <dl className="grid gap-2 sm:grid-cols-2">
-        {items.map(([label, value]) => (
-          <div key={label} className="rounded-md bg-slate-50 px-3 py-2">
-            <dt className="text-xs text-slate-500">{label}</dt>
-            <dd className="font-medium break-all text-slate-800">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      </p>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={mono ? "truncate font-mono text-xs" : "truncate font-medium"}>{value}</span>
     </div>
   );
 }

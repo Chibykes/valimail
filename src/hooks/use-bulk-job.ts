@@ -1,23 +1,50 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiRoutes } from "@/constants/routes";
 import { QueryKeys } from "@/constants/query-keys";
 import { BULK_POLL_INTERVAL_MS, BulkJobStatus } from "@/constants/validation";
 import { apiClient } from "@/lib/api-client";
 import type {
+  BulkJobListResponse,
   BulkJobStatusResponse,
   BulkResultsResponse,
   CreateBulkResponse,
 } from "@/types/api";
 
+type CreateBulkVars = {
+  emails: string[];
+  name?: string;
+};
+
+export function useBulkJobs() {
+  return useQuery({
+    queryKey: QueryKeys.bulkJobs(),
+    queryFn: async () => {
+      const { data } = await apiClient.get<BulkJobListResponse>(ApiRoutes.BULK);
+      return data;
+    },
+    refetchInterval: (query) => {
+      const running = query.state.data?.jobs.some(
+        (job) => job.status !== BulkJobStatus.COMPLETED,
+      );
+      return running ? BULK_POLL_INTERVAL_MS * 3 : false;
+    },
+  });
+}
+
 export function useCreateBulkJob() {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (emails: string[]) => {
+    mutationFn: async ({ emails, name }: CreateBulkVars) => {
       const { data } = await apiClient.post<CreateBulkResponse>(ApiRoutes.BULK, {
         input: emails,
+        name,
       });
       return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QueryKeys.bulkJobs() });
     },
   });
 }

@@ -20,9 +20,22 @@ export type CheckEmailResponse = {
   checkId: string;
 };
 
+export type RecentCheck = {
+  id: string;
+  email: string;
+  isReachable: ReachableStatus | string;
+  source: string;
+  createdAt: string;
+};
+
+export type RecentChecksResponse = {
+  checks: RecentCheck[];
+};
+
 export type CreateBulkRequest = {
   input?: string[];
   emails?: string[];
+  name?: string;
 };
 
 export type CreateBulkResponse = {
@@ -31,24 +44,31 @@ export type CreateBulkResponse = {
   status: BulkJobStatus | string;
 };
 
+export type BulkSummary = {
+  safe: number;
+  risky: number;
+  invalid: number;
+  unknown: number;
+};
+
 export type BulkJobResponse = {
   jobId: string;
+  name: string | null;
   reacherJobId: string;
   status: BulkJobStatus | string;
   totalRecords: number;
   totalProcessed: number;
-  summary: {
-    safe: number;
-    risky: number;
-    invalid: number;
-    unknown: number;
-  };
+  summary: BulkSummary;
   createdAt: string;
   finishedAt: string | null;
 };
 
 /** Alias used by some services/hooks */
 export type BulkJobStatusResponse = BulkJobResponse;
+
+export type BulkJobListResponse = {
+  jobs: BulkJobResponse[];
+};
 
 export type BulkResultsResponse = {
   jobId: string;

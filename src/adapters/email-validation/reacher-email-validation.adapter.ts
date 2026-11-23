@@ -1,4 +1,8 @@
-import { CheckEmailSource, ReacherPaths } from "@/constants/reacher";
+import {
+  CheckEmailSource,
+  REACHER_RESULTS_PAGE_SIZE,
+  ReacherPaths,
+} from "@/constants/reacher";
 import type { HttpClient } from "@/adapters/http/http-client.interface";
 import type { EmailValidationAdapter } from "./email-validation.interface";
 import type {
@@ -24,9 +28,11 @@ export class ReacherEmailValidationAdapter implements EmailValidationAdapter {
   }
 
   async createBulk(emails: string[]): Promise<ReacherBulkCreateResponse> {
-    return this.http.post<ReacherBulkCreateResponse>(ReacherPaths.BULK, {
-      input: emails.map((to_email) => ({ to_email })),
-    });
+    const response = await this.http.post<{ job_id: string | number }>(
+      ReacherPaths.BULK,
+      { input: emails },
+    );
+    return { job_id: String(response.job_id) };
   }
 
   async getBulkStatus(jobId: string): Promise<ReacherBulkStatusResponse> {
@@ -36,8 +42,18 @@ export class ReacherEmailValidationAdapter implements EmailValidationAdapter {
   }
 
   async getBulkResults(jobId: string): Promise<ReacherBulkResultsResponse> {
-    return this.http.get<ReacherBulkResultsResponse>(
-      ReacherPaths.bulkResults(jobId),
-    );
+    const results: ReacherCheckEmailResult[] = [];
+
+    for (let offset = 0; ; offset += REACHER_RESULTS_PAGE_SIZE) {
+      const page = await this.http.get<ReacherBulkResultsResponse>(
+        ReacherPaths.bulkResults(jobId),
+        { params: { limit: REACHER_RESULTS_PAGE_SIZE, offset } },
+      );
+      const items = page.results ?? page.data ?? [];
+      results.push(...items);
+      if (items.length < REACHER_RESULTS_PAGE_SIZE) break;
+    }
+
+    return { results };
   }
 }

@@ -29,13 +29,14 @@ model ValidationCheck {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, createdAt])
   @@index([email])
 }
 
 model BulkJob {
   id             String    @id @default(cuid())
   userId         String
+  name           String?
   reacherJobId   String    @unique
   status         String
   totalRecords   Int       @default(0)
@@ -49,6 +50,6 @@ model BulkJob {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, createdAt])
 }
 

@@ -6,7 +6,8 @@ import { EmailHelper } from "@/helpers/email";
 import { ReachableHelper } from "@/helpers/reachable";
 import { ValidationCheckRepository } from "@/repositories/validation-check";
 import { UserService } from "@/services/user";
-import type { CheckEmailResponse } from "@/types/api";
+import { RECENT_CHECKS_PAGE_SIZE } from "@/constants/validation";
+import type { CheckEmailResponse, RecentChecksResponse } from "@/types/api";
 
 export class ValidationService {
   static async checkEmail(params: {
@@ -47,6 +48,30 @@ export class ValidationService {
       source,
       result,
       checkId: check.id,
+    };
+  }
+
+  static async listRecent(params: {
+    clerkId: string;
+    emailAddress: string;
+  }): Promise<RecentChecksResponse> {
+    const user = await UserService.ensureUser(
+      params.clerkId,
+      params.emailAddress,
+    );
+    const checks = await ValidationCheckRepository.listForUser(
+      user.id,
+      RECENT_CHECKS_PAGE_SIZE,
+    );
+
+    return {
+      checks: checks.map((check) => ({
+        id: check.id,
+        email: check.email,
+        isReachable: check.isReachable,
+        source: check.source,
+        createdAt: check.createdAt.toISOString(),
+      })),
     };
   }
 }

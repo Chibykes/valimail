@@ -8,6 +8,19 @@ export const AppRoutes = {
   dashboardJob: (jobId: string) => `/dashboard/lists/${jobId}`,
 } as const;
 
+export const AuthRedirects = {
+  AFTER_SIGN_IN: AppRoutes.DASHBOARD,
+  AFTER_SIGN_UP: AppRoutes.DASHBOARD,
+  AFTER_SIGN_OUT: AppRoutes.HOME,
+} as const;
+
+export const MarketingAnchors = {
+  FEATURES: "#features",
+  USE_CASES: "#use-cases",
+  RELIABILITY: "#reliability",
+  FAQ: "#faq",
+} as const;
+
 export const ApiRoutes = {
   CHECK_EMAIL: "/api/v1/check-email",
   BULK: "/api/v1/bulk",
