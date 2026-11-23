@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  validationChecks ValidationCheck[]
+  bulkJobs         BulkJob[]
+}
+
+model ValidationCheck {
+  id          String   @id @default(cuid())
+  userId      String
+  email       String
+  isReachable String
+  rawResult   Json
+  source      String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([email])
+}
+
+model BulkJob {
+  id             String    @id @default(cuid())
+  userId         String
+  reacherJobId   String    @unique
+  status         String
+  totalRecords   Int       @default(0)
+  totalProcessed Int       @default(0)
+  summarySafe    Int       @default(0)
+  summaryRisky   Int       @default(0)
+  summaryInvalid Int       @default(0)
+  summaryUnknown Int       @default(0)
+  createdAt      DateTime  @default(now())
+  finishedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+

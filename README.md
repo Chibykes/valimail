@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Valimail
 
-## Getting Started
+Email validation web app. Browser talks to Next.js Route Handlers; handlers call Reacher via a swappable adapter and persist results in Postgres.
 
-First, run the development server:
+## Stack
+
+- Next.js 15 (App Router) + Clerk
+- Prisma 7 + PostgreSQL (Docker Compose, `prisma.config.ts` + `@prisma/adapter-pg`)
+- TanStack Query + Axios
+- shadcn/ui + Tailwind
+- Reacher (external) for SMTP/MX/syntax checks
+
+## Prerequisites
+
+- Node 20+
+- Docker (for Postgres)
+- Clerk app keys (already linked if you ran `clerk init --app …`)
+- Reacher running at `REACHER_BASE_URL` (default `http://localhost:8080`)
+
+## Setup
 
 ```bash
+cp .env.example .env.local
+# Ensure Clerk keys are present (or: npx clerk@latest env pull)
+# Add REACHER_BASE_URL / REACHER_HEADER_SECRET as needed
+
+docker compose up -d
+npm install          # postinstall runs prisma generate → src/generated/prisma
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## App routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Path | Purpose |
+| --- | --- |
+| `/` | Marketing landing + demo check |
+| `/sign-in`, `/sign-up` | Clerk auth |
+| `/dashboard` | Redirects to `/dashboard/single` |
+| `/dashboard/single` | Single email validation |
+| `/dashboard/lists` | Bulk upload |
+| `/dashboard/lists/[jobId]` | Bulk job status + results |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Next.js dev server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run db:generate` | Generate Prisma Client (`src/generated/prisma`) |
+| `npx prisma migrate dev` | Apply migrations (URL from `prisma.config.ts`) |
+| `npx prisma studio` | Browse DB |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+Browser → Axios + TanStack Query → /api/v1/* → Clerk auth
+  → Services → EmailValidationAdapter (Reacher) + Prisma repositories
+```
 
-## Deploy on Vercel
+Key folders:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `src/constants` — env keys, routes, Reacher paths, query keys, statuses
+- `src/adapters` — HTTP + email-validation interfaces + Reacher impl (factory in `index.ts`)
+- `src/helpers` — `EmailHelper`, `CsvHelper`, `ReachableHelper`, `ApiErrorHelper`
+- `src/repositories` — Prisma only
+- `src/services` — orchestration
+- `src/app/api/v1` — thin route handlers
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## API
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `POST` | `/api/v1/check-email` | `?sync=1` uses Reacher v0; default v1 |
+| `POST` | `/api/v1/bulk` | Body `{ input: string[] }` |
+| `GET` | `/api/v1/bulk/[jobId]` | Ownership check + status sync |
+| `GET` | `/api/v1/bulk/[jobId]/results` | Ownership check + results |
+
+## Clerk
+
+This project is linked to Clerk application `app_3MUsB9v0T5jroRHytkpUAokhPWA` (ValiMail).
+
+If CLI auth expires:
+
+```bash
+npx -y clerk@latest auth login
+npx -y clerk@latest env pull --app app_3MUsB9v0T5jroRHytkpUAokhPWA
+npx -y clerk@latest doctor
+```
+
+## Out of scope
+
+- Billing
+- User API keys
