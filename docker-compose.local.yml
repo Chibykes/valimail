@@ -20,6 +20,7 @@ services:
       - wal_buffers=2MB
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-valimail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-valimail}
       POSTGRES_DB: ${POSTGRES_DB:-valimail}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
