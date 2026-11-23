@@ -1,0 +1,90 @@
+name: valimail
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - effective_cache_size=128MB
+      - -c
+      - max_connections=40
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - wal_buffers=2MB
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-valimail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-valimail}
+      POSTGRES_DB: ${POSTGRES_DB:-valimail}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5433"
+    volumes:
+      - valimail_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-valimail}:${POSTGRES_PASSWORD:-valimail}@postgres:5432/${POSTGRES_DB:-valimail}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_URL:-/sign-in}
+        NEXT_PUBLIC_CLERK_SIGN_UP_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_URL:-/sign-up}
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:${PORT:-4455}:4455"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "4455"
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-valimail}:${POSTGRES_PASSWORD:-valimail}@postgres:5432/${POSTGRES_DB:-valimail}?schema=public
+      REACHER_BASE_URL: ${REACHER_DOCKER_URL:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4455/api/v1/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  valimail_pg_data:

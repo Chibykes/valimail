@@ -1,24 +1,86 @@
+name: valimail
+
+# Images from GHCR (built by .github/workflows/docker.yml).
+# Deploy sets APP_IMAGE / MIGRATE_IMAGE to a git sha tag; default is :latest.
 services:
   postgres:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    env_file:
-      - .env
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - effective_cache_size=128MB
+      - -c
+      - max_connections=40
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - wal_buffers=2MB
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-valimail}
       POSTGRES_DB: ${POSTGRES_DB:-valimail}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5433"
     volumes:
       - valimail_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-valimail} -d ${POSTGRES_DB:-valimail}",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  migrate:
+    image: ${MIGRATE_IMAGE:-ghcr.io/chibykes/valimail/migrate:latest}
+    pull_policy: always
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-valimail}:${POSTGRES_PASSWORD:-valimail}@postgres:5432/${POSTGRES_DB:-valimail}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: ${APP_IMAGE:-ghcr.io/chibykes/valimail/app:latest}
+    pull_policy: always
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:${PORT:-4455}:4455"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "4455"
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-valimail}:${POSTGRES_PASSWORD:-valimail}@postgres:5432/${POSTGRES_DB:-valimail}?schema=public
+      # Reacher is outside this compose network. Override with REACHER_DOCKER_URL.
+      REACHER_BASE_URL: ${REACHER_DOCKER_URL:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4455/api/v1/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   valimail_pg_data:
