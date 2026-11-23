@@ -56,8 +56,7 @@ ENV DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_
   NEXT_PUBLIC_CLERK_SIGN_IN_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_URL} \
   NEXT_PUBLIC_CLERK_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_URL}
 
-RUN test -n "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" \
-  && pnpm exec prisma generate \
+RUN pnpm exec prisma generate \
   && pnpm exec next build \
   && rm -rf .next/cache
 
