@@ -155,6 +155,8 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./gha_deploy -N ""
 | `/dashboard/lists` | Paste or upload a list |
 | `/dashboard/lists/[jobId]` | Bulk job progress, results, CSV export |
 | `/dashboard/single` | Single email validation |
+| `/dashboard/api` | Create and revoke API keys |
+| `/docs` | Public API integration guide |
 | `/api/v1/health` | Public liveness check. No auth |
 
 ## Scripts
@@ -203,7 +205,14 @@ Key folders:
 | `GET` | `/api/v1/bulk` | Lists for the signed-in user |
 | `POST` | `/api/v1/bulk` | Body `{ emails: string[], name?: string }` |
 | `GET` | `/api/v1/bulk/[jobId]` | Ownership check + status sync |
-| `GET` | `/api/v1/bulk/[jobId]/results` | Ownership check + results |
+| `GET` | `/api/v1/bulk/[jobId]/results` | Ownership check + results. Clerk session or API key |
+| `GET` | `/api/v1/api-keys` | List keys for the signed-in user. No secrets |
+| `POST` | `/api/v1/api-keys` | Body `{ name }`. Returns the `vm_live_` secret once |
+| `POST` | `/api/v1/api-keys/[id]/revoke` | Revoke a key you own |
+
+`POST /api/v1/check-email`, `POST /api/v1/bulk`, and the bulk status and results reads accept a Clerk session or an API key. Send `Authorization: Bearer vm_live_...` or `x-api-key`. Listing recent checks, listing jobs, and managing keys stay on the Clerk session.
+
+The secret is stored as a SHA-256 hash. It cannot be shown again. Full request shapes and a copyable agent prompt are on `/docs`.
 
 ## Clerk
 
@@ -220,4 +229,3 @@ Sign-in and sign-up send the user to `/dashboard`.
 ## Out of scope
 
 - Billing
-- User API keys

@@ -4,4 +4,5 @@ export const QueryKeys = {
   bulkJobs: () => ["bulk-jobs"] as const,
   bulkJob: (jobId: string) => ["bulk-job", jobId] as const,
   bulkResults: (jobId: string) => ["bulk-results", jobId] as const,
+  apiKeys: () => ["api-keys"] as const,
 } as const;

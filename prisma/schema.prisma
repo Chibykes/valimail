@@ -16,6 +16,22 @@ model User {
 
   validationChecks ValidationCheck[]
   bulkJobs         BulkJob[]
+  apiKeys          ApiKey[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  prefix     String
+  keyHash    String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model ValidationCheck {

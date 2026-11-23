@@ -44,6 +44,11 @@ export function SiteFooter() {
                 Dashboard
               </Link>
             </li>
+            <li>
+              <Link href={AppRoutes.DOCS} className="hover:text-foreground">
+                API docs
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

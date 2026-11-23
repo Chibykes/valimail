@@ -4,9 +4,17 @@ import { AuthRedirects } from "@/constants/routes";
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/docs(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/v1/health(.*)",
+]);
+
+const isApiKeyRoute = createRouteMatcher([
+  "/api/v1/check-email",
+  "/api/v1/check-email/(.*)",
+  "/api/v1/bulk",
+  "/api/v1/bulk/(.*)",
 ]);
 
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
@@ -24,7 +32,7 @@ export default clerkMiddleware(async (auth, request) => {
     }
   }
 
-  if (!isPublicRoute(request)) {
+  if (!isPublicRoute(request) && !isApiKeyRoute(request)) {
     await auth.protect();
   }
 });

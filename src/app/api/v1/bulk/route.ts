@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorHelper } from "@/helpers/api-error";
-import { AuthError, requireAuth } from "@/lib/auth/protect";
+import { AuthError, requireAuth, requireUser } from "@/lib/auth/protect";
 import { BulkJobService } from "@/services/bulk-job";
 import type { CreateBulkRequest } from "@/types/api";
 
@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const authContext = await requireAuth();
+    const authContext = await requireUser(request);
     const body = (await request.json()) as CreateBulkRequest;
 
     const emails = body.input ?? body.emails ?? [];

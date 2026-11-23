@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorHelper } from "@/helpers/api-error";
-import { AuthError, requireAuth } from "@/lib/auth/protect";
+import { AuthError, requireUser } from "@/lib/auth/protect";
 import { BulkJobService, NotFoundError } from "@/services/bulk-job";
 
 type RouteContext = {
   params: Promise<{ jobId: string }>;
 };
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const authContext = await requireAuth();
+    const authContext = await requireUser(request);
     const { jobId } = await context.params;
 
     const result = await BulkJobService.getResults({

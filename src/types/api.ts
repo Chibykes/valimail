@@ -70,6 +70,23 @@ export type BulkJobListResponse = {
   jobs: BulkJobResponse[];
 };
 
+export type ApiKeyRecord = {
+  id: string;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+};
+
+export type ApiKeyListResponse = {
+  keys: ApiKeyRecord[];
+};
+
+export type ApiKeyCreatedResponse = ApiKeyRecord & {
+  key: string;
+};
+
 export type BulkResultsResponse = {
   jobId: string;
   results: Array<{

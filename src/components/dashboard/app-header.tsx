@@ -1,7 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { ListChecks, MailCheck } from "lucide-react";
+import { KeyRound, ListChecks, MailCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 const NAV_ICONS = {
   [DashboardNavKey.LISTS]: ListChecks,
   [DashboardNavKey.SINGLE]: MailCheck,
+  [DashboardNavKey.API]: KeyRound,
 } as const;
 
 export function AppHeader() {
