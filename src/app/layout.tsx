@@ -25,6 +25,9 @@ const mono = Geist_Mono({
 export const metadata: Metadata = {
   title: `${Brand.NAME} — ${Brand.TAGLINE}`,
   description: Brand.DESCRIPTION,
+  other: {
+    cryptomus: "e13b7243",
+  },
 };
 
 export default function RootLayout({
