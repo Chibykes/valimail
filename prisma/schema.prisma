@@ -20,6 +20,7 @@ model User {
   bulkJobs         BulkJob[]
   apiKeys          ApiKey[]
   creditLedger     CreditLedger[]
+  cryptoInvoices   CryptoInvoice[]
 }
 
 model CreditLedger {
@@ -31,8 +32,24 @@ model CreditLedger {
   referenceId            String?
   stripeSessionId        String?  @unique
   stripePaymentIntentId  String?  @unique
+  nowpaymentsPaymentId   String?  @unique
   idempotencyKey         String?  @unique
   createdAt              DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model CryptoInvoice {
+  id                   String   @id @default(cuid())
+  userId               String
+  planId               String
+  nowpaymentsInvoiceId String?  @unique
+  paymentId            String?  @unique
+  status               String   @default("created")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -36,6 +36,7 @@ export const ApiRoutes = {
   BILLING: "/api/v1/billing",
   BILLING_CHECKOUT: "/api/v1/billing/checkout",
   BILLING_CONFIRM: "/api/v1/billing/confirm",
+  NOWPAYMENTS_WEBHOOK: "/api/v1/nowpayments/webhook",
   ADMIN_LOGIN: "/api/admin/login",
   ADMIN_LOGOUT: "/api/admin/logout",
   adminBalance: (userId: string) => `/api/admin/users/${userId}/balance`,

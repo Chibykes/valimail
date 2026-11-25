@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorHelper } from "@/helpers/api-error";
 import { AuthError, requireAuth } from "@/lib/auth/protect";
 import { BillingService } from "@/services/billing";
+import { NowPaymentsBilling } from "@/services/nowpayments-billing";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
       return ApiErrorHelper.badRequest("planId is required");
     }
 
-    const result = await BillingService.checkout({
+    const result = await NowPaymentsBilling.checkout({
       clerkId: authContext.clerkId,
       emailAddress: authContext.email,
       planId: body.planId,

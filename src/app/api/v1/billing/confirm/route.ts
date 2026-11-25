@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorHelper } from "@/helpers/api-error";
 import { AuthError, requireAuth } from "@/lib/auth/protect";
 import { BillingService, CheckoutOwnershipError } from "@/services/billing";
+import {
+  NowPaymentsBilling,
+  NowPaymentsOwnershipError,
+} from "@/services/nowpayments-billing";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,17 +15,24 @@ export async function POST(request: NextRequest) {
       return ApiErrorHelper.badRequest("sessionId is required");
     }
 
-    const result = await BillingService.confirmCheckout({
-      clerkId: authContext.clerkId,
-      emailAddress: authContext.email,
-      sessionId: body.sessionId.trim(),
-    });
+    const sessionId = body.sessionId.trim();
+    const result = sessionId.startsWith("cs_")
+      ? await BillingService.confirmCheckout({
+          clerkId: authContext.clerkId,
+          emailAddress: authContext.email,
+          sessionId,
+        })
+      : await NowPaymentsBilling.confirmInvoice({
+          clerkId: authContext.clerkId,
+          emailAddress: authContext.email,
+          invoiceId: sessionId,
+        });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof AuthError) {
       return ApiErrorHelper.unauthorized(error.message);
     }
-    if (error instanceof CheckoutOwnershipError) {
+    if (error instanceof CheckoutOwnershipError || error instanceof NowPaymentsOwnershipError) {
       return ApiErrorHelper.response(403, error.message);
     }
     if (error instanceof Error && error.message === "Invalid checkout session") {

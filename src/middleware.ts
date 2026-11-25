@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/v1/health(.*)",
   "/api/v1/stripe/webhook(.*)",
+  "/api/v1/nowpayments/webhook(.*)",
 ]);
 
 const isApiKeyRoute = createRouteMatcher([

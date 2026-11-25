@@ -6,6 +6,7 @@ import { BillingHelper } from "@/helpers/billing";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { CreditRepository } from "@/repositories/credit";
+import { NowPaymentsBilling } from "@/services/nowpayments-billing";
 import { UserService } from "@/services/user";
 import type { BillingAccountResponse } from "@/types/api";
 
@@ -31,6 +32,12 @@ export class BillingService {
       params.emailAddress,
     );
     await BillingService.reconcilePaidSessions(user);
+    await NowPaymentsBilling.reconcileUser(user.id).catch((error) => {
+      console.error("[nowpayments] reconcile failed", {
+        userId: user.id,
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    });
     const fresh = await prisma.user.findUnique({ where: { id: user.id } });
     const entries = await CreditRepository.listForUser(user.id, LEDGER_PAGE_SIZE);
     return {
@@ -235,6 +242,7 @@ export type CheckoutGrantStatus =
   | "granted"
   | "already_credited"
   | "unpaid"
+  | "pending"
   | "ignored";
 
 export class CheckoutOwnershipError extends Error {

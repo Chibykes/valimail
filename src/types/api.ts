@@ -110,6 +110,7 @@ export type CheckoutConfirmStatus =
   | "granted"
   | "already_credited"
   | "unpaid"
+  | "pending"
   | "ignored";
 
 export type CheckoutConfirmResponse = {

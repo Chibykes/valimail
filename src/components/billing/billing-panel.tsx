@@ -8,9 +8,16 @@ import { ErrorMessageHelper } from "@/helpers/error-message";
 import { useBillingAccount, useConfirmCheckout } from "@/hooks/use-billing";
 import type { CheckoutConfirmStatus } from "@/types/api";
 
-const CONFIRM_TOAST: Record<CheckoutConfirmStatus, { type: "success" | "error"; message: string }> = {
+const CONFIRM_TOAST: Record<
+  CheckoutConfirmStatus,
+  { type: "success" | "error" | "message"; message: string }
+> = {
   granted: { type: "success", message: "Payment confirmed. Credits added." },
   already_credited: { type: "success", message: "This payment is already on your balance." },
+  pending: {
+    type: "message",
+    message: "Payment received. Credits appear when the network confirms.",
+  },
   unpaid: { type: "error", message: "Stripe has not marked this payment as paid." },
   ignored: { type: "error", message: "This payment could not be matched to a credit pack." },
 };
@@ -23,13 +30,14 @@ export function CheckoutNotice() {
   useEffect(() => {
     if (started.current) return;
     if (params.get("checkout") !== "success") return;
-    const sessionId = params.get("session_id");
+    const sessionId = params.get("session_id") ?? params.get("invoice_id");
     if (!sessionId) return;
     started.current = true;
     confirm.mutate(sessionId, {
       onSuccess: (data) => {
         const notice = CONFIRM_TOAST[data.status];
-        toast[notice.type](notice.message);
+        if (notice.type === "message") toast.message(notice.message);
+        else toast[notice.type](notice.message);
       },
       onError: (error) => {
         toast.error(ErrorMessageHelper.toMessage(error, "Could not confirm the payment"));
