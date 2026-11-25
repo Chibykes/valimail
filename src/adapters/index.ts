@@ -16,7 +16,12 @@ export function createEmailValidationAdapter(): EmailValidationAdapter {
     headers[ReacherHeaders.SECRET] = secret;
   }
 
-  const http = new AxiosHttpClient(getReacherBaseUrl(), headers);
+  const baseURL = getReacherBaseUrl();
+  console.info("[reacher] client", {
+    baseURL,
+    secretHeader: Boolean(secret),
+  });
+  const http = new AxiosHttpClient(baseURL, headers);
   return new ReacherEmailValidationAdapter(http);
 }
 

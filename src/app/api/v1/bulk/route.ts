@@ -42,6 +42,9 @@ export async function POST(request: NextRequest) {
     if (error instanceof AuthError) {
       return ApiErrorHelper.unauthorized(error.message);
     }
+    console.error("[bulk] create failed", {
+      message: error instanceof Error ? error.message : "unknown",
+    });
     return ApiErrorHelper.json(error, 502, "Bulk job creation failed");
   }
 }

@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const sync = request.nextUrl.searchParams.get("sync") === "1";
+    console.info("[check-email] start", { sync, hasToEmail: Boolean(email) });
     const result = await ValidationService.checkEmail({
       clerkId: authContext.clerkId,
       emailAddress: authContext.email,
@@ -40,11 +41,18 @@ export async function POST(request: NextRequest) {
       sync,
     });
 
+    console.info("[check-email] done", {
+      isReachable: result.isReachable,
+      source: result.source,
+    });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof AuthError) {
       return ApiErrorHelper.unauthorized(error.message);
     }
+    console.error("[check-email] failed", {
+      message: error instanceof Error ? error.message : "unknown",
+    });
     return ApiErrorHelper.json(error, 502, "Email validation failed");
   }
 }
