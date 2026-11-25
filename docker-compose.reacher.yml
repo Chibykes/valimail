@@ -61,7 +61,7 @@ services:
     environment:
       <<: *reacher-common-env
       RUST_LOG: ${RUST_LOG:-reacher=info}
-      RCH__BACKEND_NAME: valimail-reacher
+      RCH__BACKEND_NAME: valimail-validation-service
       RCH__PROXY__HOST: "103.119.1.160"
       RCH__PROXY__PORT: "5555"
     depends_on:
@@ -156,6 +156,72 @@ services:
       RUST_LOG: ${RUST_LOG:-reacher=info}
       RCH__BACKEND_NAME: valimail-reacher-w5
       RCH__PROXY__HOST: "103.124.172.134"
+      RCH__PROXY__PORT: "1080"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-6:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w6
+      RCH__PROXY__HOST: "59.11.209.162"
+      RCH__PROXY__PORT: "1080"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-7:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w7
+      RCH__PROXY__HOST: "31.56.19.26"
+      RCH__PROXY__PORT: "1080"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-8:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w8
+      RCH__PROXY__HOST: "113.249.111.67"
       RCH__PROXY__PORT: "1080"
     depends_on:
       reacher-rabbitmq:
