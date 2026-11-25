@@ -1,44 +1,35 @@
 import Link from "next/link";
+import { useId } from "react";
 import { Brand } from "@/constants/brand";
 import { AppRoutes } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 export function LogoMark({ className }: { className?: string }) {
+  const id = `vm-${useId().replace(/:/g, "")}`;
+
   return (
     <svg
-      viewBox="0 0 32 32"
+      viewBox="0 0 64 64"
       fill="none"
       aria-hidden
       className={cn("size-8", className)}
     >
+      <rect width="64" height="64" rx="16" fill={`url(#${id})`} />
+      <path fill="oklch(0.99 0 0)" d="M14 17h10.4L32 36.5V50Z" />
+      <path fill="oklch(0.72 0.17 158)" d="M50 17H39.6L32 36.5V50Z" />
       <defs>
-        <linearGradient id="vm-mark" x1="0" y1="0" x2="32" y2="32">
+        <linearGradient
+          id={id}
+          x1="8"
+          y1="0"
+          x2="56"
+          y2="64"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop offset="0" stopColor="oklch(0.62 0.2 264)" />
           <stop offset="1" stopColor="oklch(0.42 0.2 268)" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="9" fill="url(#vm-mark)" />
-      <path
-        d="M8 11.5A1.5 1.5 0 0 1 9.5 10h13a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 8 20.5z"
-        stroke="white"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="m8.6 11 7.4 5.4 7.4-5.4"
-        stroke="white"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="23" cy="22" r="5" fill="oklch(0.72 0.17 158)" stroke="white" strokeWidth="1.6" />
-      <path
-        d="m20.8 22 1.5 1.5 2.9-3"
-        stroke="white"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
     </svg>
   );
 }
