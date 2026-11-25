@@ -62,7 +62,7 @@ services:
       HOSTNAME: 0.0.0.0
       DATABASE_URL: postgresql://${POSTGRES_USER:-valimail}:${POSTGRES_PASSWORD:-valimail}@postgres:5432/${POSTGRES_DB:-valimail}?schema=public
       # Reacher is outside this compose network. Override with REACHER_DOCKER_URL.
-      REACHER_BASE_URL: ${REACHER_DOCKER_URL:-http://host.docker.internal:8080}
+      REACHER_BASE_URL: ${REACHER_DOCKER_URL:-http://localhost:8080}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
