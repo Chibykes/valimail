@@ -47,18 +47,20 @@ export function SingleCheckForm() {
           e.preventDefault();
           void validate(email);
         }}
-        className="flex items-center gap-2 rounded-2xl border border-border bg-background p-1.5 shadow-[0_16px_50px_-20px] shadow-brand-900/20 transition focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-100"
+        className="flex flex-col gap-2 rounded-2xl border border-border bg-background p-1.5 shadow-[0_16px_50px_-20px] shadow-brand-900/20 transition focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-100 sm:flex-row sm:items-center"
       >
-        <Mail className="ml-3 size-5 shrink-0 text-muted-foreground" />
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@company.com"
-          aria-label="Email address"
-          className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/70"
-        />
-        <Button type="submit" disabled={checkEmail.isPending} className="h-11 rounded-xl px-5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <Mail className="ml-3 size-5 shrink-0 text-muted-foreground" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@company.com"
+            aria-label="Email address"
+            className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/70"
+          />
+        </div>
+        <Button type="submit" disabled={checkEmail.isPending} className="h-11 w-full rounded-xl px-5 sm:w-auto">
           {checkEmail.isPending ? (
             <>
               <Loader2 className="animate-spin" /> Checking
@@ -70,6 +72,7 @@ export function SingleCheckForm() {
           )}
         </Button>
       </form>
+      <p className="text-xs text-muted-foreground">Each check uses 1 credit.</p>
 
       {checkEmail.isPending ? <PendingCard /> : null}
       {checkEmail.data && !checkEmail.isPending ? (

@@ -182,7 +182,7 @@ function OrbitRings() {
   return (
     <svg
       viewBox="0 0 600 600"
-      className="pointer-events-none absolute top-1/2 left-1/2 -z-10 w-[150%] -translate-x-1/2 -translate-y-1/2 text-brand-200"
+      className="pointer-events-none absolute top-1/2 left-1/2 -z-10 hidden w-[150%] -translate-x-1/2 -translate-y-1/2 text-brand-200 sm:block"
       aria-hidden
     >
       {[140, 200, 260].map((r, i) => (

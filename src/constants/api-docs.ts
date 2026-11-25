@@ -21,17 +21,21 @@ Endpoints:
 2. POST /api/v1/bulk
    Body: { "input": ["a@example.com", "b@example.com"], "name": "optional list name" }
    201: { "jobId", "reacherJobId", "status" }
+   status is "Running" when a slot is free, or "Pending" when this account already has 5 lists running. reacherJobId is null while Pending. One credit is spent per valid address.
 
 3. GET /api/v1/bulk/{jobId}
-   Poll until status is "Completed".
+   Poll until status is "Completed". Pending means the list is waiting for a free slot.
    Response includes totalRecords, totalProcessed, and summary { safe, risky, invalid, unknown }.
 
 4. GET /api/v1/bulk/{jobId}/results
    Call after the job is Completed.
    Response: { "jobId", "results": [{ "email", "isReachable", "raw" }] }
 
+Each check spends 1 credit. A list spends 1 credit per valid address. New accounts start at 0 credits.
+
 Errors are JSON { "error": string, "details"?: unknown }.
 401 means the key is missing, revoked, or does not start with ${API_KEY_PREFIX}.
+402 means the balance cannot cover the request. The body also includes balance and required. The list is not started.
 `;
 
 export const API_DOC_ENDPOINTS = [
@@ -43,7 +47,7 @@ export const API_DOC_ENDPOINTS = [
   "to_email": "person@example.com"
 }`,
     notes:
-      "Add ?sync=1 for a synchronous v0 check. The default queues the check on v1. isReachable is safe, risky, invalid, or unknown.",
+      "Add ?sync=1 for a synchronous v0 check. The default queues the check on v1. isReachable is safe, risky, invalid, or unknown. Costs 1 credit. A short balance returns 402 and the address is not checked.",
     status: 200,
     response: `{
   "email": "person@example.com",
@@ -85,7 +89,8 @@ export const API_DOC_ENDPOINTS = [
   "input": ["a@example.com", "b@example.com"],
   "name": "April list"
 }`,
-    notes: "name is optional. The response includes jobId. Poll that id until the job is completed.",
+    notes:
+      "name is optional. Costs 1 credit per valid address. 201 status is Running when a slot is free, or Pending when this account already has 5 lists running. reacherJobId is null while Pending. 402 when the balance cannot cover the whole list.",
     status: 201,
     response: `{
   "jobId": "cm123abc",
@@ -99,7 +104,7 @@ export const API_DOC_ENDPOINTS = [
     title: "Job status",
     body: null,
     notes:
-      "Poll until status is Completed. summary counts safe, risky, invalid, and unknown addresses.",
+      "Poll until status is Completed. Pending means the list is waiting for one of the 5 running slots to free. summary counts safe, risky, invalid, and unknown addresses.",
     status: 200,
     response: `{
   "jobId": "cm123abc",

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex h-full min-h-[320px] items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-50 via-background to-surface p-8">
+    <div className="relative flex h-full min-h-[280px] items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-50 via-background to-surface p-4 sm:min-h-[320px] sm:p-8">
       <div className="bg-dot-grid absolute inset-0 opacity-60" aria-hidden />
       <div className="relative w-full max-w-sm">{children}</div>
     </div>
@@ -18,7 +18,7 @@ function SyntaxIllustration() {
   return (
     <Frame>
       <div className="space-y-6">
-        <div className="flex items-start justify-center gap-1.5 font-mono text-lg">
+        <div className="flex flex-wrap items-start justify-center gap-1.5 font-mono text-base sm:text-lg">
           <div className="flex flex-col items-center gap-2">
             <span className="rounded-xl border-2 border-brand-300 bg-background px-3 py-2 text-brand-700 shadow-sm">
               maria
@@ -102,18 +102,21 @@ function SmtpIllustration() {
   ] as const;
   return (
     <Frame>
-      <div className="overflow-hidden rounded-2xl border border-brand-900/20 bg-brand-950 font-mono text-[12px] shadow-xl">
+      <div className="overflow-hidden rounded-2xl border border-brand-900/20 bg-brand-950 font-mono text-[11px] shadow-xl sm:text-[12px]">
         <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-2.5">
           <span className="size-2 rounded-full bg-white/20" />
           <span className="size-2 rounded-full bg-white/20" />
           <span className="size-2 rounded-full bg-white/20" />
           <span className="ml-2 text-[10px] text-white/40">smtp · port 25</span>
         </div>
-        <div className="space-y-1.5 p-4">
+        <div className="space-y-1.5 overflow-x-auto p-4">
           {lines.map(([dir, text], i) => (
             <p
               key={text}
-              className={cn("animate-fade-up", dir === "out" ? "text-brand-200" : "text-emerald-300")}
+              className={cn(
+                "animate-fade-up whitespace-nowrap",
+                dir === "out" ? "text-brand-200" : "text-emerald-300",
+              )}
               style={{ animationDelay: `${i * 140}ms` }}
             >
               <span className="mr-2 text-white/30">{dir === "out" ? "→" : "←"}</span>
@@ -149,8 +152,8 @@ function ProfilingIllustration() {
         </div>
         <div className="mt-5 space-y-3">
           {rows.map(([label, on]) => (
-            <div key={label} className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{label}</span>
+            <div key={label} className="flex items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 text-muted-foreground">{label}</span>
               <span className={cn("relative h-5 w-9 rounded-full transition", on ? "bg-amber-400" : "bg-muted")}>
                 <span className={cn("absolute top-0.5 size-4 rounded-full bg-white shadow transition-all", on ? "left-[18px]" : "left-0.5")} />
               </span>
@@ -188,7 +191,7 @@ function ListsIllustration() {
         <div className="mt-4 divide-y divide-border/70">
           {rows.map(([email, status]) => (
             <div key={email} className="flex items-center justify-between py-2">
-              <span className="truncate font-mono text-xs text-muted-foreground">{email}</span>
+              <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">{email}</span>
               <StatusPill status={status} />
             </div>
           ))}

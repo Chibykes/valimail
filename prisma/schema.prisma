@@ -8,15 +8,52 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  clerkId          String   @unique
+  email            String
+  creditBalance    Int      @default(0)
+  stripeCustomerId String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   validationChecks ValidationCheck[]
   bulkJobs         BulkJob[]
   apiKeys          ApiKey[]
+  creditLedger     CreditLedger[]
+  cryptoInvoices   CryptoInvoice[]
+}
+
+model CreditLedger {
+  id                     String   @id @default(cuid())
+  userId                 String
+  delta                  Int
+  balanceAfter           Int
+  reason                 String
+  referenceId            String?
+  stripeSessionId        String?  @unique
+  stripePaymentIntentId  String?  @unique
+  nowpaymentsPaymentId   String?  @unique
+  idempotencyKey         String?  @unique
+  createdAt              DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model CryptoInvoice {
+  id                   String   @id @default(cuid())
+  userId               String
+  planId               String
+  nowpaymentsInvoiceId String?  @unique
+  paymentId            String?  @unique
+  status               String   @default("created")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model ApiKey {
@@ -53,7 +90,9 @@ model BulkJob {
   id             String    @id @default(cuid())
   userId         String
   name           String?
-  reacherJobId   String    @unique
+  reacherJobId   String?   @unique
+  inputEmails    Json?
+  claimedAt      DateTime?
   status         String
   totalRecords   Int       @default(0)
   totalProcessed Int       @default(0)
@@ -67,5 +106,7 @@ model BulkJob {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, status, createdAt])
+  @@index([status, createdAt])
 }
 

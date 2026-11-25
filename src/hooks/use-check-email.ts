@@ -26,6 +26,7 @@ export function useCheckEmail() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QueryKeys.recentChecks() });
+      void queryClient.invalidateQueries({ queryKey: QueryKeys.billing() });
     },
   });
 }

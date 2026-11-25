@@ -26,7 +26,8 @@ export function useBulkJobs() {
     },
     refetchInterval: (query) => {
       const running = query.state.data?.jobs.some(
-        (job) => job.status !== BulkJobStatus.COMPLETED,
+        (job) =>
+          job.status === BulkJobStatus.PENDING || job.status === BulkJobStatus.RUNNING,
       );
       return running ? BULK_POLL_INTERVAL_MS * 3 : false;
     },
@@ -45,6 +46,7 @@ export function useCreateBulkJob() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QueryKeys.bulkJobs() });
+      void queryClient.invalidateQueries({ queryKey: QueryKeys.billing() });
     },
   });
 }
@@ -61,7 +63,12 @@ export function useBulkJobStatus(jobId: string | undefined) {
     },
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (!status || status === BulkJobStatus.COMPLETED) return false;
+      if (
+        !status ||
+        (status !== BulkJobStatus.PENDING && status !== BulkJobStatus.RUNNING)
+      ) {
+        return false;
+      }
       return BULK_POLL_INTERVAL_MS;
     },
   });

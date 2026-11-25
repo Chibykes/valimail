@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AppRoutes } from "@/constants/routes";
 import {
   DEFAULT_LIST_NAME,
+  BulkJobStatus,
   MAX_BULK_EMAILS,
   MAX_LIST_NAME_LENGTH,
 } from "@/constants/validation";
@@ -71,7 +72,11 @@ export function BulkComposer() {
         emails: valid,
         name: name.trim() || undefined,
       });
-      toast.success(`Validating ${valid.length} addresses`);
+      toast.success(
+        job.status === BulkJobStatus.PENDING
+          ? "Queued. It starts when another list finishes."
+          : `Validating ${valid.length} addresses`,
+      );
       router.push(AppRoutes.dashboardJob(job.jobId));
     } catch (error) {
       toast.error(ErrorMessageHelper.toMessage(error, "Failed to start validation"));
@@ -80,7 +85,7 @@ export function BulkComposer() {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_16px_50px_-20px] shadow-brand-900/20">
-      <div role="tablist" className="flex gap-1 border-b border-border px-3">
+      <div role="tablist" className="flex flex-wrap gap-1 border-b border-border px-3">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -200,12 +205,13 @@ export function BulkComposer() {
           </span>{" "}
           valid
           {invalid.length ? ` · ${invalid.length} skipped` : ""}
+          {valid.length ? ` · ${valid.length.toLocaleString()} credits` : ""}
           {overLimit ? ` · max ${MAX_BULK_EMAILS.toLocaleString()}` : ""}
         </p>
         <Button
           onClick={onSubmit}
           disabled={!valid.length || overLimit || createBulk.isPending}
-          className="h-9 rounded-lg px-4 sm:ml-auto"
+          className="h-9 w-full rounded-lg px-4 sm:ml-auto sm:w-auto"
         >
           {createBulk.isPending ? (
             <Loader2 className="animate-spin" />

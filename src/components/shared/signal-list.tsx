@@ -25,21 +25,21 @@ export function SignalList({
         return (
           <li
             key={signal.key}
-            className="flex animate-fade-up items-center justify-between gap-3 py-2.5 text-sm"
+            className="flex animate-fade-up items-start justify-between gap-3 py-2.5 text-sm"
             style={{ animationDelay: `${index * 60}ms` }}
           >
-            <span className="flex items-center gap-2.5 text-muted-foreground">
+            <span className="flex min-w-0 items-center gap-2.5 text-muted-foreground">
               <span
                 className={cn(
-                  "grid size-5 place-items-center rounded-full",
+                  "grid size-5 shrink-0 place-items-center rounded-full",
                   tone.className,
                 )}
               >
                 <Icon className="size-3" strokeWidth={2.5} />
               </span>
-              {signal.label}
+              <span className="min-w-0">{signal.label}</span>
             </span>
-            <span className="font-medium text-foreground">{signal.value}</span>
+            <span className="shrink-0 text-right font-medium text-foreground">{signal.value}</span>
           </li>
         );
       })}

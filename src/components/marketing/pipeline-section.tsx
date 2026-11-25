@@ -31,7 +31,7 @@ export function PipelineSection() {
   return (
     <section
       id="reliability"
-      className="relative scroll-mt-20 overflow-hidden bg-brand-950 py-24 text-white"
+      className="relative scroll-mt-20 overflow-hidden bg-brand-950 py-16 text-white sm:py-24"
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.15] [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:24px_24px]"

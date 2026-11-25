@@ -18,6 +18,7 @@ export const DASHBOARD_NAV = [
 export const MARKETING_NAV = [
   { label: "Features", href: MarketingAnchors.FEATURES },
   { label: "Use cases", href: MarketingAnchors.USE_CASES },
+  { label: "Pricing", href: AppRoutes.PRICING },
   { label: "Reliability", href: MarketingAnchors.RELIABILITY },
   { label: "FAQ", href: MarketingAnchors.FAQ },
 ] as const;

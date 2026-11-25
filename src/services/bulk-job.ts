@@ -1,14 +1,15 @@
-import { getEmailValidationAdapter } from "@/adapters";
 import type { BulkJob } from "@/generated/prisma/client";
+import { getEmailValidationAdapter } from "@/adapters";
 import {
   BULK_JOBS_PAGE_SIZE,
-  BulkJobStatus,
   MAX_BULK_EMAILS,
   MAX_LIST_NAME_LENGTH,
 } from "@/constants/validation";
 import { EmailHelper } from "@/helpers/email";
 import { ReachableHelper } from "@/helpers/reachable";
 import { BulkJobRepository } from "@/repositories/bulk-job";
+import { CreditRepository } from "@/repositories/credit";
+import { BulkQueueService } from "@/services/bulk-queue";
 import { UserService } from "@/services/user";
 import type {
   BulkJobListResponse,
@@ -41,23 +42,24 @@ export class BulkJobService {
       params.clerkId,
       params.emailAddress,
     );
-
-    const adapter = getEmailValidationAdapter();
-    const created = await adapter.createBulk(valid);
-
-    const job = await BulkJobRepository.create({
+    const name = params.name?.trim().slice(0, MAX_LIST_NAME_LENGTH) || null;
+    const job = await CreditRepository.acceptBulkJob({
       userId: user.id,
-      name: params.name?.trim().slice(0, MAX_LIST_NAME_LENGTH) || null,
-      reacherJobId: created.job_id,
-      status: BulkJobStatus.RUNNING,
-      totalRecords: valid.length,
+      name,
+      emails: valid,
     });
 
-    return {
-      jobId: job.id,
-      reacherJobId: job.reacherJobId,
-      status: job.status,
-    };
+    try {
+      await BulkQueueService.tick(user.id);
+    } catch (error) {
+      console.error("[bulk] queue tick failed", {
+        jobId: job.id,
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+
+    const fresh = await BulkJobRepository.findById(job.id);
+    return BulkJobService.toCreateResponse(fresh ?? job);
   }
 
   static async list(params: UserParams): Promise<BulkJobListResponse> {
@@ -65,6 +67,13 @@ export class BulkJobService {
       params.clerkId,
       params.emailAddress,
     );
+    try {
+      await BulkQueueService.tick(user.id);
+    } catch (error) {
+      console.error("[bulk] queue tick failed", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
     const jobs = await BulkJobRepository.listForUser(
       user.id,
       BULK_JOBS_PAGE_SIZE,
@@ -84,41 +93,21 @@ export class BulkJobService {
     if (!job) {
       throw new NotFoundError("Bulk job not found");
     }
-    if (job.status === BulkJobStatus.COMPLETED) {
-      return BulkJobService.toResponse(job);
+
+    try {
+      await BulkQueueService.tick(user.id);
+    } catch (error) {
+      console.error("[bulk] queue tick failed", {
+        jobId: job.id,
+        message: error instanceof Error ? error.message : "unknown",
+      });
     }
 
-    const adapter = getEmailValidationAdapter();
-    const remote = await adapter.getBulkStatus(job.reacherJobId);
-
-    const totalRecords = remote.total_records ?? job.totalRecords;
-    const totalProcessed = remote.total_processed ?? job.totalProcessed;
-    const statusFromRemote = ReachableHelper.mapBulkStatus(
-      remote.status ?? remote.job_status,
-    );
-    const status =
-      totalRecords > 0 && totalProcessed >= totalRecords
-        ? BulkJobStatus.COMPLETED
-        : statusFromRemote;
-    const finishedAt =
-      status === BulkJobStatus.COMPLETED
-        ? remote.finished_at
-          ? new Date(remote.finished_at)
-          : (job.finishedAt ?? new Date())
-        : null;
-
-    const updated = await BulkJobRepository.updateFromStatus(job.id, {
-      status,
-      totalRecords,
-      totalProcessed,
-      summarySafe: remote.summary?.total_safe ?? job.summarySafe,
-      summaryRisky: remote.summary?.total_risky ?? job.summaryRisky,
-      summaryInvalid: remote.summary?.total_invalid ?? job.summaryInvalid,
-      summaryUnknown: remote.summary?.total_unknown ?? job.summaryUnknown,
-      finishedAt,
-    });
-
-    return BulkJobService.toResponse(updated);
+    const fresh = await BulkJobRepository.findByIdForUser(params.jobId, user.id);
+    if (!fresh) {
+      throw new NotFoundError("Bulk job not found");
+    }
+    return BulkJobService.toResponse(fresh);
   }
 
   static async getResults(
@@ -133,6 +122,9 @@ export class BulkJobService {
     if (!job) {
       throw new NotFoundError("Bulk job not found");
     }
+    if (!job.reacherJobId) {
+      return { jobId: job.id, results: [] };
+    }
 
     const adapter = getEmailValidationAdapter();
     const remote = await adapter.getBulkResults(job.reacherJobId);
@@ -145,6 +137,14 @@ export class BulkJobService {
         isReachable: ReachableHelper.normalize(item.is_reachable),
         raw: item,
       })),
+    };
+  }
+
+  private static toCreateResponse(job: BulkJob): CreateBulkResponse {
+    return {
+      jobId: job.id,
+      reacherJobId: job.reacherJobId,
+      status: job.status,
     };
   }
 

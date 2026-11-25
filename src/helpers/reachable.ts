@@ -1,5 +1,5 @@
 import { STATUS_STYLES, type StatusStyle } from "@/constants/status-styles";
-import { ReachableStatus } from "@/constants/validation";
+import { BulkJobStatus, ReachableStatus } from "@/constants/validation";
 import type { ReacherCheckEmailResult } from "@/types/reacher";
 
 const BASE_SCORES: Record<ReachableStatus, number> = {
@@ -46,11 +46,13 @@ export class ReachableHelper {
     return Math.max(0, Math.min(100, score));
   }
 
-  static mapBulkStatus(status: unknown): "Running" | "Completed" {
+  static mapBulkStatus(
+    status: unknown,
+  ): typeof BulkJobStatus.RUNNING | typeof BulkJobStatus.COMPLETED {
     const raw = String(status ?? "").toLowerCase();
     if (raw === "completed" || raw === "done" || raw === "finished") {
-      return "Completed";
+      return BulkJobStatus.COMPLETED;
     }
-    return "Running";
+    return BulkJobStatus.RUNNING;
   }
 }

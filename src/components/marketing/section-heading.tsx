@@ -28,7 +28,7 @@ export function SectionHeading({
       >
         {eyebrow}
       </p>
-      <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+      <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
         {title}
       </h2>
       {description ? (

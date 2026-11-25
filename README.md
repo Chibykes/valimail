@@ -42,6 +42,15 @@ Copy values into `.env` for Compose and `.env.local` for `pnpm dev`. Do not comm
 | `RCH__FROM_EMAIL` | Reacher | MAIL FROM. Default `hello@chibykes.dev` |
 | `REACHER_PORT` | Host publish | Reacher HTTP. Default `8080`, bound to `127.0.0.1` |
 | `PORT` | Host publish | App port. Default `4455`, bound to `127.0.0.1` |
+| `STRIPE_SECRET_KEY` | Runtime | Stripe secret. Kept for the existing Stripe path. Test key starts with `sk_test_` |
+| `STRIPE_WEBHOOK_SECRET` | Runtime | Signing secret for `POST /api/v1/stripe/webhook` |
+| `NOWPAYMENTS_API_KEY` | Runtime | NOWPayments API key. Live checkout uses this |
+| `NOWPAYMENTS_IPN_SECRET` | Runtime | HMAC secret for `POST /api/v1/nowpayments/webhook` |
+| `NOWPAYMENTS_EMAIL` | Runtime | Account email. Used only to recover a missed callback |
+| `NOWPAYMENTS_PASSWORD` | Runtime | Account password. Used only to recover a missed callback |
+| `NOWPAYMENTS_API_BASE` | Runtime | Default `https://api.nowpayments.io/v1`. Sandbox is `https://api-sandbox.nowpayments.io/v1` |
+| `ADMIN_PASSWORD_HASH` | Runtime | Scrypt hash for `/admin`. Never the raw password |
+| `ADMIN_SESSION_SECRET` | Runtime | HMAC secret for the admin session cookie |
 
 Changing a `NEXT_PUBLIC_*` value requires a new image build. Restarting the container is not enough.
 
@@ -136,7 +145,7 @@ Set `DEPLOY_PATH` to the real clone path, for example `/opt/valimail`.
 
 ### VPS `.env`
 
-Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, and `REACHER_HEADER_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
+Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `NOWPAYMENTS_EMAIL`, `NOWPAYMENTS_PASSWORD`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
 
 Clerk Dashboard allowed origins and redirect URLs must include the public app URL. The process listens on **4455**, not 80. Put a reverse proxy on 80/443 in front of `127.0.0.1:4455` for a normal domain. Do not open 5433 to the internet.
 
@@ -160,7 +169,10 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./gha_deploy -N ""
 | `/dashboard/lists/[jobId]` | Bulk job progress, results, CSV export |
 | `/dashboard/single` | Single email validation |
 | `/dashboard/api` | Create and revoke API keys |
+| `/dashboard/billing` | Credit balance, ledger, and checkout |
+| `/pricing` | Public credit packs |
 | `/docs` | Public API integration guide |
+| `/admin` | Password-gated overview, users, and jobs. Not linked from the app |
 | `/api/v1/health` | Public liveness check. No auth |
 
 ## Scripts
@@ -214,8 +226,15 @@ Key folders:
 | `GET` | `/api/v1/api-keys` | List keys for the signed-in user. No secrets |
 | `POST` | `/api/v1/api-keys` | Body `{ name }`. Returns the `vm_live_` secret once |
 | `POST` | `/api/v1/api-keys/[id]/revoke` | Revoke a key you own |
+| `GET` | `/api/v1/billing` | Balance and recent ledger. Clerk session |
+| `POST` | `/api/v1/billing/checkout` | Body `{ planId }`. Returns `{ url }` for a NOWPayments invoice |
+| `POST` | `/api/v1/billing/confirm` | Body `{ sessionId }`. A `cs_` id still confirms Stripe. Any other id recovers a NOWPayments invoice and grants once if it is finished |
+| `POST` | `/api/v1/stripe/webhook` | Public. Grants credits from a signed Stripe event |
+| `POST` | `/api/v1/nowpayments/webhook` | Public. Grants credits from a signed NOWPayments callback when the payment is finished |
 
-`POST /api/v1/check-email`, `POST /api/v1/bulk`, and the bulk status and results reads accept a Clerk session or an API key. Send `Authorization: Bearer vm_live_...` or `x-api-key`. Listing recent checks, listing jobs, and managing keys stay on the Clerk session.
+`POST /api/v1/check-email`, `POST /api/v1/bulk`, and the bulk status and results reads accept a Clerk session or an API key. Send `Authorization: Bearer vm_live_...` or `x-api-key`. Listing recent checks, listing jobs, managing keys, and billing stay on the Clerk session.
+
+One credit validates one address. A single check costs 1. A list costs its valid-address count and is rejected with 402 when the balance is short. Each account runs at most 5 lists at once. Extra lists stay `Pending` until a running list finishes. New accounts start at 0 credits.
 
 The secret is stored as a SHA-256 hash. It cannot be shown again. Full request shapes and a copyable agent prompt are on `/docs`.
 
@@ -231,6 +250,27 @@ npx -y clerk@latest doctor
 
 Sign-in and sign-up send the user to `/dashboard`.
 
-## Out of scope
+## Billing
 
-- Billing
+Buy credits opens a NOWPayments invoice priced in USD. The customer chooses the coin on that page. The payout wallet is the one set in the NOWPayments dashboard. Use a cheap network there, such as USDC on Base or Solana. Prices live in `src/constants/billing.ts`. The $5 / 1,000 pack is the base rate. Larger packs are discounted.
+
+Credits are added only when a signed callback reports `payment_status=finished` for the original payment. A repeated deposit does not add credits. The billing page can recover a missed callback by listing that invoice. A second callback or page load finds the existing ledger row and does not add credits again. `refunded` reverses that grant without taking the balance below 0.
+
+NOWPayments cannot call localhost. Point a public tunnel at `POST /api/v1/nowpayments/webhook` while testing. Sandbox requests use `NOWPAYMENTS_API_BASE=https://api-sandbox.nowpayments.io/v1`.
+
+The Stripe Checkout code, webhook, and confirm path remain for a later switch back. A `cs_` session id still grants from Stripe when `payment_status=paid`.
+
+```bash
+stripe listen --forward-to localhost:4455/api/v1/stripe/webhook
+```
+
+## Admin
+
+`/admin` uses one shared password, separate from Clerk. The password is stored only as a scrypt hash. The session cookie is httpOnly and signed with `ADMIN_SESSION_SECRET`.
+
+```bash
+printf '%s' 'your-long-password' | node scripts/hash-admin-password.mjs
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Put the first line in `ADMIN_PASSWORD_HASH` and the second in `ADMIN_SESSION_SECRET`. Both files in Compose pass them through with no defaults, the same way as the Stripe keys. The password itself stays out of git.
