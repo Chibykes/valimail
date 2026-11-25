@@ -1,5 +1,8 @@
 name: valimail
 
+include:
+  - docker-compose.reacher.yml
+
 # Images from GHCR (built by .github/workflows/docker.yml).
 # Deploy sets APP_IMAGE / MIGRATE_IMAGE to a git sha tag; default is :latest.
 services:
@@ -61,15 +64,14 @@ services:
       PORT: "4455"
       HOSTNAME: 0.0.0.0
       DATABASE_URL: postgresql://${POSTGRES_USER:-valimail}:${POSTGRES_PASSWORD:-valimail}@postgres:5432/${POSTGRES_DB:-valimail}?schema=public
-      # Reacher is outside this compose network. Override with REACHER_DOCKER_URL.
-      REACHER_BASE_URL: ${REACHER_DOCKER_URL:-http://localhost:8080}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      REACHER_BASE_URL: http://reacher:8080
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      reacher:
+        condition: service_healthy
     healthcheck:
       test:
         [

@@ -8,7 +8,7 @@ Email validation web app. The browser talks to Next.js Route Handlers. Handlers 
 - Prisma 7 + PostgreSQL (`prisma.config.ts` + `@prisma/adapter-pg`)
 - TanStack Query + Axios
 - shadcn/ui + Tailwind
-- Reacher (external) for SMTP, MX, and syntax checks
+- Reacher (bundled in Compose) for SMTP, MX, and syntax checks
 
 Images are built in GitHub Actions and pulled from GHCR. The VPS does not run `docker build`.
 
@@ -17,9 +17,9 @@ Images are built in GitHub Actions and pulled from GHCR. The VPS does not run `d
 - Node 22+ and pnpm 11
 - Docker with the Compose plugin
 - Clerk app keys (linked app: `app_3MUsB9v0T5jroRHytkpUAokhPWA`)
-- Reacher running somewhere the process can reach. Local default is `http://localhost:8080`. Inside Compose, use `http://host.docker.internal:8080` (or set `REACHER_DOCKER_URL`)
+- `REACHER_HEADER_SECRET` in `.env`. Compose passes that value to Reacher as `RCH__HEADER_SECRET`. An empty secret makes every check return 400: `Missing request header "x-reacher-secret"`.
 
-Reacher must be configured with `RCH__HEADER_SECRET`. Put that same value in `REACHER_HEADER_SECRET`. An empty secret makes every check return 400: `Missing request header "x-reacher-secret"`.
+Host `pnpm dev` calls Reacher at `http://localhost:8080`. Inside Compose the app calls `http://reacher:8080`. The HTTP API is published on `127.0.0.1:8080` for the host. RabbitMQ UI is `http://127.0.0.1:15672` (`reacher` / `reacher`).
 
 ## Environment
 
@@ -36,23 +36,27 @@ Copy values into `.env` for Compose and `.env.local` for `pnpm dev`. Do not comm
 | `POSTGRES_PASSWORD` | Postgres | Default `valimail` |
 | `POSTGRES_DB` | Postgres | Default `valimail` |
 | `POSTGRES_PORT` | Host publish | Default `5433`, bound to `127.0.0.1` |
-| `REACHER_BASE_URL` | Host dev | Default `http://localhost:8080` |
-| `REACHER_DOCKER_URL` | Compose app | Default `http://host.docker.internal:8080` |
-| `REACHER_HEADER_SECRET` | Runtime | Must match Reacher `RCH__HEADER_SECRET` |
+| `REACHER_BASE_URL` | Host dev | Default `http://localhost:8080`. Compose overwrites this to `http://reacher:8080` |
+| `REACHER_HEADER_SECRET` | Runtime | Sent as `x-reacher-secret` and set on Reacher as `RCH__HEADER_SECRET` |
+| `RCH__HELLO_NAME` | Reacher | EHLO hostname. Default `chibykes.dev` |
+| `RCH__FROM_EMAIL` | Reacher | MAIL FROM. Default `hello@chibykes.dev` |
+| `REACHER_PORT` | Host publish | Reacher HTTP. Default `8080`, bound to `127.0.0.1` |
 | `PORT` | Host publish | App port. Default `4455`, bound to `127.0.0.1` |
 
 Changing a `NEXT_PUBLIC_*` value requires a new image build. Restarting the container is not enough.
 
 ## Local development
 
-Postgres only, app on the host:
+Postgres and Reacher in Docker, app on the host:
 
 ```bash
-docker compose -f docker-compose.local.yml up -d postgres
+docker compose -f docker-compose.local.yml up -d postgres reacher
 pnpm install          # postinstall runs prisma generate → src/generated/prisma
 pnpm exec prisma migrate dev
 pnpm dev
 ```
+
+`reacher` starts RabbitMQ, Reacher's Postgres, and the HTTP API. `up -d` without a service name also starts the proxy workers.
 
 App: [http://localhost:4455](http://localhost:4455)
 
@@ -67,7 +71,9 @@ Two Compose files share the project name `valimail` and the volume `valimail_pg_
 | `docker-compose.local.yml` | Build `runner` and `migrator` on this machine |
 | `docker-compose.yml` | Pull `ghcr.io/chibykes/valimail/app` and `…/migrate` |
 
-Dockerfile targets, sized for a 1 vCPU / 1 GB VPS:
+Reacher is `docker-compose.reacher.yml`, included by both Compose files. One HTTP API plus one worker per SOCKS proxy share RabbitMQ and a Postgres database that is separate from the app database. The API joins the Docker network `reacher_net` so another Compose project on this host can call `http://reacher:8080`. Start this stack before that project.
+
+Dockerfile targets, sized for a small VPS. The Reacher workers are extra RAM on top of that:
 
 | Target | Role |
 | --- | --- |
@@ -90,8 +96,6 @@ Production pull (after the first Actions build, or once `:latest` exists):
 docker compose pull
 docker compose up -d
 ```
-
-Reacher is not part of this Compose file. If it runs on the same host, leave `REACHER_DOCKER_URL` unset. The app service adds `host.docker.internal`.
 
 ## Deploy
 
@@ -132,7 +136,7 @@ Set `DEPLOY_PATH` to the real clone path, for example `/opt/valimail`.
 
 ### VPS `.env`
 
-Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, and `REACHER_DOCKER_URL` if Reacher is not on that host. Compose overwrites `DATABASE_URL` to the `postgres` service.
+Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, and `REACHER_HEADER_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
 
 Clerk Dashboard allowed origins and redirect URLs must include the public app URL. The process listens on **4455**, not 80. Put a reverse proxy on 80/443 in front of `127.0.0.1:4455` for a normal domain. Do not open 5433 to the internet.
 
@@ -183,7 +187,8 @@ Docker:
 GitHub Actions → GHCR app + migrate
 VPS docker compose → migrate (once) → app :4455
                    → postgres :5432 (published on 127.0.0.1:5433)
-app → Reacher on the host
+                   → reacher :8080 (loopback) + workers on reacher_net
+app → http://reacher:8080
 ```
 
 Key folders:

@@ -1,0 +1,178 @@
+# Reacher queue: RabbitMQ + Postgres + HTTP API + one worker per SOCKS proxy.
+# Owned by this project. Other Compose projects (youtube-scrapper) join
+# the network `reacher_net` and call http://reacher:8080.
+# Creds for this stack are hardcoded. Header secret comes from REACHER_HEADER_SECRET.
+
+x-reacher-common-env: &reacher-common-env
+  RCH__HTTP_HOST: 0.0.0.0
+  RCH__HTTP_PORT: 8080
+  RCH__HEADER_SECRET: ${REACHER_HEADER_SECRET:-}
+  RCH__HELLO_NAME: ${RCH__HELLO_NAME:-chibykes.dev}
+  RCH__FROM_EMAIL: ${RCH__FROM_EMAIL:-hello@chibykes.dev}
+  RCH__SMTP_TIMEOUT: ${RCH__SMTP_TIMEOUT:-25}
+  RCH__WORKER__ENABLE: "true"
+  RCH__WORKER__RABBITMQ__URL: amqp://reacher:reacher@reacher-rabbitmq:5672
+  RCH__WORKER__RABBITMQ__CONCURRENCY: "5"
+  RCH__STORAGE__POSTGRES__DB_URL: postgres://reacher:reacher@reacher-postgres:5432/reacher_db
+  RCH__THROTTLE__MAX_REQUESTS_PER_MINUTE: ${RCH__THROTTLE__MAX_REQUESTS_PER_MINUTE:-120}
+  RCH__THROTTLE__MAX_REQUESTS_PER_DAY: ${RCH__THROTTLE__MAX_REQUESTS_PER_DAY:-10000}
+
+services:
+  reacher-rabbitmq:
+    image: rabbitmq:4.0-management
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: reacher
+      RABBITMQ_DEFAULT_PASS: reacher
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - reacher-rabbitmq-data:/var/lib/rabbitmq
+
+  reacher-postgres:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: reacher
+      POSTGRES_PASSWORD: reacher
+      POSTGRES_DB: reacher_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reacher -d reacher_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - reacher-postgres-data:/var/lib/postgresql/data
+
+  # HTTP API (+ consumer) — proxy 1. Published on loopback for host `pnpm dev`.
+  reacher:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REACHER_PORT:-8080}:8080"
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher
+      RCH__PROXY__HOST: "103.119.1.160"
+      RCH__PROXY__PORT: "5555"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    networks:
+      default: {}
+      reacher_net:
+        aliases:
+          - reacher
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-2:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w2
+      RCH__PROXY__HOST: "172.81.111.156"
+      RCH__PROXY__PORT: "10001"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-3:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w3
+      RCH__PROXY__HOST: "209.50.255.91"
+      RCH__PROXY__PORT: "1080"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-4:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w4
+      RCH__PROXY__HOST: "45.74.31.42"
+      RCH__PROXY__PORT: "4089"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  reacher-worker-5:
+    image: reacherhq/backend:v0.11.9
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      <<: *reacher-common-env
+      RUST_LOG: ${RUST_LOG:-reacher=info}
+      RCH__BACKEND_NAME: valimail-reacher-w5
+      RCH__PROXY__HOST: "103.124.172.134"
+      RCH__PROXY__PORT: "1080"
+    depends_on:
+      reacher-rabbitmq:
+        condition: service_healthy
+      reacher-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+networks:
+  reacher_net:
+    name: reacher_net
+
+volumes:
+  reacher-postgres-data:
+  reacher-rabbitmq-data:
