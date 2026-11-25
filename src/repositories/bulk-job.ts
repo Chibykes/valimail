@@ -83,8 +83,8 @@ export class BulkJobRepository {
   }
 
   static async markSubmitted(id: string, reacherJobId: string) {
-    return prisma.bulkJob.update({
-      where: { id },
+    const result = await prisma.bulkJob.updateMany({
+      where: { id, status: BulkJobStatus.PENDING },
       data: {
         status: BulkJobStatus.RUNNING,
         reacherJobId,
@@ -92,6 +92,7 @@ export class BulkJobRepository {
         claimedAt: null,
       },
     });
+    return result.count === 1;
   }
 
   static async releaseClaim(id: string) {

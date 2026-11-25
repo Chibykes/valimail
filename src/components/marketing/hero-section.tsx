@@ -58,14 +58,14 @@ export function HeroSection() {
         aria-hidden
       />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-5 pt-16 pb-20 lg:grid-cols-[1.05fr_1fr] lg:pt-24 lg:pb-28">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 pt-12 pb-16 sm:gap-14 sm:pt-16 sm:pb-20 lg:grid-cols-[1.05fr_1fr] lg:pt-24 lg:pb-28">
         <div className="animate-fade-up">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
             <span className="size-1.5 rounded-full bg-brand-500" />
             Simple, fast and secure email validation
           </span>
 
-          <h1 className="mt-6 font-display text-[2.6rem] leading-[1.05] font-semibold tracking-tight sm:text-6xl">
+          <h1 className="mt-6 font-display text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             Clean lists.
             <br />
             Real users.{" "}
@@ -95,21 +95,23 @@ export function HeroSection() {
 
           <form
             onSubmit={onSubmit}
-            className="mt-8 flex max-w-lg items-center gap-2 rounded-2xl border border-border bg-background p-1.5 shadow-[0_12px_40px_-12px] shadow-brand-900/20 transition focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-100"
+            className="mt-8 flex max-w-lg flex-col gap-2 rounded-2xl border border-border bg-background p-1.5 shadow-[0_12px_40px_-12px] shadow-brand-900/20 transition focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-100 sm:flex-row sm:items-center"
           >
-            <Mail className="ml-3 size-5 shrink-0 text-muted-foreground" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email.address@company.com"
-              className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/70"
-              aria-label="Email address to validate"
-            />
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <Mail className="ml-3 size-5 shrink-0 text-muted-foreground" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email.address@company.com"
+                className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/70"
+                aria-label="Email address to validate"
+              />
+            </div>
             <Button
               type="submit"
               disabled={checkEmail.isPending}
-              className="h-11 rounded-xl px-5 text-sm"
+              className="h-11 w-full rounded-xl px-5 text-sm sm:w-auto"
             >
               {checkEmail.isPending ? (
                 <Loader2 className="animate-spin" />

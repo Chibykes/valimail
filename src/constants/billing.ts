@@ -4,6 +4,7 @@ export const CreditReason = {
   PURCHASE: "purchase",
   REFUND: "refund",
   REVERSAL: "reversal",
+  ADMIN: "admin",
 } as const;
 
 export type CreditReason = (typeof CreditReason)[keyof typeof CreditReason];
@@ -26,4 +27,5 @@ export const CREDIT_REASON_LABELS: Record<CreditReason, string> = {
   [CreditReason.PURCHASE]: "Credit purchase",
   [CreditReason.REFUND]: "Check refund",
   [CreditReason.REVERSAL]: "Payment reversal",
+  [CreditReason.ADMIN]: "Admin adjustment",
 };

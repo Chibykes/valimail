@@ -69,7 +69,11 @@ export class BulkQueueService {
 
       try {
         const created = await adapter.createBulk(emails);
-        await BulkJobRepository.markSubmitted(job.id, created.job_id);
+        const started = await BulkJobRepository.markSubmitted(job.id, created.job_id);
+        if (!started) {
+          console.info("[bulk-queue] list cancelled before start", { jobId: job.id });
+          continue;
+        }
         console.info("[bulk-queue] started", { jobId: job.id, total: emails.length });
       } catch (error) {
         console.error("[bulk-queue] start failed", {

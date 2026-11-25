@@ -32,6 +32,7 @@ export function BulkJobDetail({ jobId }: { jobId: string }) {
   const job = statusQuery.data;
   const completed = job?.status === BulkJobStatus.COMPLETED;
   const pending = job?.status === BulkJobStatus.PENDING;
+  const cancelled = job?.status === BulkJobStatus.CANCELLED;
   const resultsQuery = useBulkJobResults(jobId, completed);
   const [filter, setFilter] = useState<Filter>(RESULTS_FILTER_ALL);
 
@@ -61,9 +62,16 @@ export function BulkJobDetail({ jobId }: { jobId: string }) {
         <div className="bg-dot-grid mask-fade-b pointer-events-none absolute inset-0" aria-hidden />
         <div className="relative mx-auto max-w-4xl px-5 pt-8 pb-10">
           <BackLink />
-          <JobHeader job={job} completed={completed} pending={Boolean(pending)} />
+          <JobHeader
+            job={job}
+            completed={completed}
+            pending={Boolean(pending)}
+            cancelled={Boolean(cancelled)}
+          />
           {completed ? (
             <SummaryCards job={job} filter={filter} onFilter={setFilter} />
+          ) : cancelled ? (
+            <CancelledNotice />
           ) : pending ? (
             <QueuedNotice />
           ) : (
@@ -103,15 +111,17 @@ function JobHeader({
   job,
   completed,
   pending,
+  cancelled,
 }: {
   job: BulkJobResponse;
   completed: boolean;
   pending: boolean;
+  cancelled: boolean;
 }) {
   return (
     <div className="mt-4 mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
+        <h1 className="font-display text-2xl font-semibold tracking-tight break-words sm:text-3xl">
           {job.name ?? DEFAULT_LIST_NAME}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -124,9 +134,11 @@ function JobHeader({
           "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset",
           completed
             ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-            : pending
-              ? "bg-amber-50 text-amber-800 ring-amber-600/20"
-              : "bg-brand-50 text-brand-700 ring-brand-600/20",
+            : cancelled
+              ? "bg-muted text-muted-foreground ring-border"
+              : pending
+                ? "bg-amber-50 text-amber-800 ring-amber-600/20"
+                : "bg-brand-50 text-brand-700 ring-brand-600/20",
         )}
       >
         <span className="relative flex size-2">
@@ -136,12 +148,29 @@ function JobHeader({
           <span
             className={cn(
               "relative inline-flex size-2 rounded-full",
-              completed ? "bg-emerald-500" : pending ? "bg-amber-500" : "bg-brand-500",
+              completed
+                ? "bg-emerald-500"
+                : cancelled
+                  ? "bg-muted-foreground"
+                  : pending
+                    ? "bg-amber-500"
+                    : "bg-brand-500",
             )}
           />
         </span>
-        {completed ? "Completed" : pending ? "Queued" : "Validating"}
+        {completed ? "Completed" : cancelled ? "Cancelled" : pending ? "Queued" : "Validating"}
       </span>
+    </div>
+  );
+}
+
+function CancelledNotice() {
+  return (
+    <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+      <p className="font-display text-2xl font-semibold">This list was cancelled</p>
+      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+        It never started. The credits for these addresses were returned.
+      </p>
     </div>
   );
 }
@@ -161,9 +190,9 @@ function RunningProgress({ job }: { job: BulkJobResponse }) {
   const progress = BulkSummaryHelper.progressPercent(job.totalProcessed, job.totalRecords);
   return (
     <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-display text-5xl font-semibold tabular-nums">{progress}%</p>
+          <p className="font-display text-4xl font-semibold tabular-nums sm:text-5xl">{progress}%</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {job.totalProcessed.toLocaleString()} of {job.totalRecords.toLocaleString()} processed
           </p>
@@ -195,8 +224,8 @@ function SummaryCards({
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
         <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="font-display text-5xl font-semibold text-emerald-600 tabular-nums">
+          <div className="min-w-0">
+            <p className="font-display text-4xl font-semibold text-emerald-600 tabular-nums sm:text-5xl">
               {BulkSummaryHelper.deliverablePercent(job.summary)}%
             </p>
             <p className="mt-1 text-sm text-muted-foreground">of your list is deliverable</p>
@@ -307,7 +336,7 @@ function ResultsTable({
             </button>
           ))}
         </div>
-        <label className="ml-auto flex h-9 w-48 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm focus-within:border-brand-300 focus-within:ring-3 focus-within:ring-brand-100">
+        <label className="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm focus-within:border-brand-300 focus-within:ring-3 focus-within:ring-brand-100 sm:ml-auto sm:w-48">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={query}
@@ -316,7 +345,7 @@ function ResultsTable({
             className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground/70"
           />
         </label>
-        <Button variant="outline" className="h-9" onClick={exportCsv} disabled={!rows.length}>
+        <Button variant="outline" className="h-9 w-full sm:w-auto" onClick={exportCsv} disabled={!rows.length}>
           <Download /> Export {rows.length.toLocaleString()}
         </Button>
       </div>

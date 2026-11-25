@@ -21,6 +21,7 @@ export const BulkJobStatus = {
   PENDING: "Pending",
   RUNNING: "Running",
   COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
 } as const;
 
 export type BulkJobStatus = (typeof BulkJobStatus)[keyof typeof BulkJobStatus];

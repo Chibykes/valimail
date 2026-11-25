@@ -6,7 +6,7 @@ import { AppRoutes } from "@/constants/routes";
 export function CtaSection() {
   return (
     <section className="px-5 pb-24">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-8 py-16 text-center text-white md:py-20">
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-5 py-12 text-center text-white sm:px-8 sm:py-16 md:py-20">
         <div
           className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]"
           aria-hidden
@@ -20,7 +20,7 @@ export function CtaSection() {
           <path d="M34 56 100 108 166 56" fill="none" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" />
         </svg>
         <div className="relative">
-          <h2 className="mx-auto max-w-2xl font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
             Start sending to people who actually exist
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-lg text-white/75">

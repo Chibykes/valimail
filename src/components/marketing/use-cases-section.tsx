@@ -83,7 +83,7 @@ const ART = {
 
 export function UseCasesSection() {
   return (
-    <section id="use-cases" className="scroll-mt-20 bg-surface py-24">
+    <section id="use-cases" className="scroll-mt-20 bg-surface py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-5">
         <SectionHeading
           eyebrow="Use cases"

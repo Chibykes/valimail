@@ -36,14 +36,14 @@ export function ResultPanel({
 
   return (
     <div className={cn("space-y-5", className)}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="truncate font-mono text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 truncate font-mono text-sm text-muted-foreground">
           {data.email}
         </p>
-        <StatusPill status={status} />
+        <StatusPill status={status} className="shrink-0" />
       </div>
 
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-end justify-between gap-3">
         <div className="min-w-0 space-y-2">
           <Icon className={cn("size-7", style.text)} strokeWidth={2} />
           <h3 className="font-display text-xl leading-tight font-semibold">
@@ -53,7 +53,7 @@ export function ResultPanel({
             {data.body ?? style.description}
           </p>
         </div>
-        <ScoreGauge score={data.score} status={status} className="w-32 shrink-0" />
+        <ScoreGauge score={data.score} status={status} className="w-24 shrink-0 sm:w-32" />
       </div>
 
       <SignalList signals={data.signals} />

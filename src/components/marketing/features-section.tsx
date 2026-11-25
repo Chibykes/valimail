@@ -12,7 +12,7 @@ export function FeaturesSection() {
   const feature = FEATURES.find((item) => item.key === active) ?? FEATURES[0];
 
   return (
-    <section id="features" className="scroll-mt-20 py-24">
+    <section id="features" className="scroll-mt-20 py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-5">
         <SectionHeading
           eyebrow="How it works"
@@ -48,7 +48,7 @@ export function FeaturesSection() {
           className="mt-10 grid animate-fade-up items-center gap-10 lg:grid-cols-2"
         >
           <div className="order-2 lg:order-1">
-            <h3 className="font-display text-3xl font-semibold tracking-tight">
+            <h3 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
               {feature.title}
             </h3>
             <p className="mt-4 text-lg text-muted-foreground">{feature.body}</p>

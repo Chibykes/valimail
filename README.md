@@ -44,6 +44,8 @@ Copy values into `.env` for Compose and `.env.local` for `pnpm dev`. Do not comm
 | `PORT` | Host publish | App port. Default `4455`, bound to `127.0.0.1` |
 | `STRIPE_SECRET_KEY` | Runtime | Stripe secret. Test key starts with `sk_test_` |
 | `STRIPE_WEBHOOK_SECRET` | Runtime | Signing secret for `POST /api/v1/stripe/webhook` |
+| `ADMIN_PASSWORD_HASH` | Runtime | Scrypt hash for `/admin`. Never the raw password |
+| `ADMIN_SESSION_SECRET` | Runtime | HMAC secret for the admin session cookie |
 
 Changing a `NEXT_PUBLIC_*` value requires a new image build. Restarting the container is not enough.
 
@@ -138,7 +140,7 @@ Set `DEPLOY_PATH` to the real clone path, for example `/opt/valimail`.
 
 ### VPS `.env`
 
-Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
+Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
 
 Clerk Dashboard allowed origins and redirect URLs must include the public app URL. The process listens on **4455**, not 80. Put a reverse proxy on 80/443 in front of `127.0.0.1:4455` for a normal domain. Do not open 5433 to the internet.
 
@@ -165,6 +167,7 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./gha_deploy -N ""
 | `/dashboard/billing` | Credit balance, ledger, and checkout |
 | `/pricing` | Public credit packs |
 | `/docs` | Public API integration guide |
+| `/admin` | Password-gated overview, users, and jobs. Not linked from the app |
 | `/api/v1/health` | Public liveness check. No auth |
 
 ## Scripts
@@ -252,3 +255,14 @@ stripe listen --forward-to localhost:4455/api/v1/stripe/webhook
 ```
 
 Use a test key (`sk_test_`) and card `4242 4242 4242 4242` until the Stripe account is activated for live charges.
+
+## Admin
+
+`/admin` uses one shared password, separate from Clerk. The password is stored only as a scrypt hash. The session cookie is httpOnly and signed with `ADMIN_SESSION_SECRET`.
+
+```bash
+printf '%s' 'your-long-password' | node scripts/hash-admin-password.mjs
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Put the first line in `ADMIN_PASSWORD_HASH` and the second in `ADMIN_SESSION_SECRET`. Both files in Compose pass them through with no defaults, the same way as the Stripe keys. The password itself stays out of git.

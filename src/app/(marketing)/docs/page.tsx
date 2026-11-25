@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 
 export default function DocsPage() {
   return (
-    <article className="mx-auto max-w-3xl px-5 py-16">
+    <article className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
       <p className="text-xs font-semibold tracking-[0.16em] text-brand-600 uppercase">
         API
       </p>
-      <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">
+      <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
         Integrate {Brand.NAME}
       </h1>
       <p className="mt-4 text-base leading-relaxed text-muted-foreground">
@@ -43,7 +43,7 @@ export default function DocsPage() {
           Send either header. A missing, revoked, or wrongly prefixed key
           returns 401.
         </p>
-        <pre className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
+        <pre className="max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
           {`Authorization: Bearer ${API_KEY_PLACEHOLDER}
 OR
 x-api-key: ${API_KEY_PLACEHOLDER}`}
@@ -67,7 +67,7 @@ x-api-key: ${API_KEY_PLACEHOLDER}`}
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Request
                 </p>
-                <pre className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
+                <pre className="max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
                   {endpoint.body}
                 </pre>
               </>
@@ -75,7 +75,7 @@ x-api-key: ${API_KEY_PLACEHOLDER}`}
             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               {endpoint.status} response
             </p>
-            <pre className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
+            <pre className="max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
               {endpoint.response}
             </pre>
           </div>
@@ -91,7 +91,7 @@ x-api-key: ${API_KEY_PLACEHOLDER}`}
           {API_KEY_PREFIX}. 402 means the balance cannot cover the check. A
           list that does not fit is rejected whole.
         </p>
-        <pre className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
+        <pre className="max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
           {`{
   "error": "Not enough credits. This needs 500 and the balance is 120.",
   "balance": 120,

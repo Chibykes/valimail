@@ -85,7 +85,7 @@ export function BulkComposer() {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_16px_50px_-20px] shadow-brand-900/20">
-      <div role="tablist" className="flex gap-1 border-b border-border px-3">
+      <div role="tablist" className="flex flex-wrap gap-1 border-b border-border px-3">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -211,7 +211,7 @@ export function BulkComposer() {
         <Button
           onClick={onSubmit}
           disabled={!valid.length || overLimit || createBulk.isPending}
-          className="h-9 rounded-lg px-4 sm:ml-auto"
+          className="h-9 w-full rounded-lg px-4 sm:ml-auto sm:w-auto"
         >
           {createBulk.isPending ? (
             <Loader2 className="animate-spin" />

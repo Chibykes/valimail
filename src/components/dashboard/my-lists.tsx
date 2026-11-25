@@ -28,12 +28,12 @@ export function MyLists() {
 
   return (
     <section className="mx-auto max-w-3xl px-5 py-10">
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="font-display text-lg font-semibold">
           My lists{" "}
           <span className="ml-1 text-sm font-normal text-muted-foreground">{jobs.length}</span>
         </h2>
-        <label className="flex h-9 w-56 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm focus-within:border-brand-300 focus-within:ring-3 focus-within:ring-brand-100">
+        <label className="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm focus-within:border-brand-300 focus-within:ring-3 focus-within:ring-brand-100 sm:w-56">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={query}
@@ -84,6 +84,7 @@ export function MyLists() {
 function ListRow({ job }: { job: BulkJobResponse }) {
   const pending = job.status === BulkJobStatus.PENDING;
   const running = job.status === BulkJobStatus.RUNNING;
+  const cancelled = job.status === BulkJobStatus.CANCELLED;
   const progress = BulkSummaryHelper.progressPercent(job.totalProcessed, job.totalRecords);
 
   return (
@@ -102,7 +103,9 @@ function ListRow({ job }: { job: BulkJobResponse }) {
           </p>
         </div>
         <div className="hidden w-48 items-center gap-3 sm:flex">
-          {pending ? (
+          {cancelled ? (
+            <span className="ml-auto text-xs text-muted-foreground">Cancelled</span>
+          ) : pending ? (
             <span className="ml-auto text-xs text-amber-700">Queued</span>
           ) : running ? (
             <>

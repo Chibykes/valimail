@@ -58,7 +58,7 @@ export function ApiKeysPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         <Button variant="outline" asChild>
           <Link href={AppRoutes.DOCS}>API docs</Link>
         </Button>
@@ -73,19 +73,21 @@ export function ApiKeysPanel() {
             maxLength={MAX_API_KEY_NAME_LENGTH}
             placeholder="Production server"
             aria-label="API key name"
-            className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-100"
+            className="h-12 w-full rounded-lg border border-border bg-background px-3.5 text-base outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-100 sm:h-9 sm:w-auto sm:flex-1 sm:px-3 sm:text-sm"
           />
           <Button
             onClick={() => void onCreate()}
             disabled={!name.trim() || createKey.isPending}
-            className="h-9 rounded-lg px-4"
+            className="h-12 w-full rounded-lg px-4 text-base sm:h-9 sm:w-auto sm:text-sm"
           >
             {createKey.isPending ? "Creating…" : "Create key"}
           </Button>
         </div>
-        <p className="border-t border-border bg-surface/70 px-4 py-3 text-xs text-muted-foreground">
-          The secret is shown once. Requests use{" "}
-          <code className="font-mono">Authorization: Bearer {API_KEY_PLACEHOLDER}</code>.
+        <p className="border-t border-border bg-surface/70 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+          The secret is shown once. Requests use
+          <code className="mt-1 block font-mono break-words">
+            Authorization: Bearer {API_KEY_PLACEHOLDER}
+          </code>
         </p>
       </div>
 
