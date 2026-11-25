@@ -31,6 +31,7 @@ export function BulkJobDetail({ jobId }: { jobId: string }) {
   const statusQuery = useBulkJobStatus(jobId);
   const job = statusQuery.data;
   const completed = job?.status === BulkJobStatus.COMPLETED;
+  const pending = job?.status === BulkJobStatus.PENDING;
   const resultsQuery = useBulkJobResults(jobId, completed);
   const [filter, setFilter] = useState<Filter>(RESULTS_FILTER_ALL);
 
@@ -60,9 +61,11 @@ export function BulkJobDetail({ jobId }: { jobId: string }) {
         <div className="bg-dot-grid mask-fade-b pointer-events-none absolute inset-0" aria-hidden />
         <div className="relative mx-auto max-w-4xl px-5 pt-8 pb-10">
           <BackLink />
-          <JobHeader job={job} completed={completed} />
+          <JobHeader job={job} completed={completed} pending={Boolean(pending)} />
           {completed ? (
             <SummaryCards job={job} filter={filter} onFilter={setFilter} />
+          ) : pending ? (
+            <QueuedNotice />
           ) : (
             <RunningProgress job={job} />
           )}
@@ -96,7 +99,15 @@ function BackLink() {
   );
 }
 
-function JobHeader({ job, completed }: { job: BulkJobResponse; completed: boolean }) {
+function JobHeader({
+  job,
+  completed,
+  pending,
+}: {
+  job: BulkJobResponse;
+  completed: boolean;
+  pending: boolean;
+}) {
   return (
     <div className="mt-4 mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -113,22 +124,35 @@ function JobHeader({ job, completed }: { job: BulkJobResponse; completed: boolea
           "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset",
           completed
             ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-            : "bg-brand-50 text-brand-700 ring-brand-600/20",
+            : pending
+              ? "bg-amber-50 text-amber-800 ring-amber-600/20"
+              : "bg-brand-50 text-brand-700 ring-brand-600/20",
         )}
       >
         <span className="relative flex size-2">
-          {!completed ? (
+          {!completed && !pending ? (
             <span className="absolute inline-flex size-full animate-ping-slow rounded-full bg-brand-400" />
           ) : null}
           <span
             className={cn(
               "relative inline-flex size-2 rounded-full",
-              completed ? "bg-emerald-500" : "bg-brand-500",
+              completed ? "bg-emerald-500" : pending ? "bg-amber-500" : "bg-brand-500",
             )}
           />
         </span>
-        {completed ? "Completed" : "Validating"}
+        {completed ? "Completed" : pending ? "Queued" : "Validating"}
       </span>
+    </div>
+  );
+}
+
+function QueuedNotice() {
+  return (
+    <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+      <p className="font-display text-2xl font-semibold">Waiting for a free slot</p>
+      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+        Up to 5 lists run at once. This one starts as soon as another list finishes.
+      </p>
     </div>
   );
 }

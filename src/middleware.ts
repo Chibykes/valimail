@@ -5,9 +5,11 @@ import { AuthRedirects } from "@/constants/routes";
 const isPublicRoute = createRouteMatcher([
   "/",
   "/docs(.*)",
+  "/pricing(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/v1/health(.*)",
+  "/api/v1/stripe/webhook(.*)",
 ]);
 
 const isApiKeyRoute = createRouteMatcher([

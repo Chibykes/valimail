@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorHelper } from "@/helpers/api-error";
+import { InsufficientCreditsError } from "@/helpers/credit-error";
 import { AuthError, requireAuth, requireUser } from "@/lib/auth/protect";
 import { ValidationService } from "@/services/validation";
 
@@ -49,6 +50,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof AuthError) {
       return ApiErrorHelper.unauthorized(error.message);
+    }
+    if (error instanceof InsufficientCreditsError) {
+      return ApiErrorHelper.insufficientCredits(error);
     }
     console.error("[check-email] failed", {
       message: error instanceof Error ? error.message : "unknown",

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorHelper } from "@/helpers/api-error";
+import { InsufficientCreditsError } from "@/helpers/credit-error";
 import { AuthError, requireAuth, requireUser } from "@/lib/auth/protect";
 import { BulkJobService } from "@/services/bulk-job";
 import type { CreateBulkRequest } from "@/types/api";
@@ -41,6 +42,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof AuthError) {
       return ApiErrorHelper.unauthorized(error.message);
+    }
+    if (error instanceof InsufficientCreditsError) {
+      return ApiErrorHelper.insufficientCredits(error);
     }
     console.error("[bulk] create failed", {
       message: error instanceof Error ? error.message : "unknown",

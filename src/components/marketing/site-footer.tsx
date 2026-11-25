@@ -19,9 +19,15 @@ export function SiteFooter() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             {MARKETING_NAV.map((item) => (
               <li key={item.href}>
-                <a href={item.href} className="hover:text-foreground">
-                  {item.label}
-                </a>
+                {item.href.startsWith("/") ? (
+                  <Link href={item.href} className="hover:text-foreground">
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a href={item.href} className="hover:text-foreground">
+                    {item.label}
+                  </a>
+                )}
               </li>
             ))}
           </ul>

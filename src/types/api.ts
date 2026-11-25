@@ -5,6 +5,8 @@ export type ApiErrorBody = {
   error: string;
   details?: unknown;
   code?: string;
+  balance?: number;
+  required?: number;
 };
 
 export type CheckEmailRequest = {
@@ -40,7 +42,7 @@ export type CreateBulkRequest = {
 
 export type CreateBulkResponse = {
   jobId: string;
-  reacherJobId: string;
+  reacherJobId: string | null;
   status: BulkJobStatus | string;
 };
 
@@ -54,7 +56,7 @@ export type BulkSummary = {
 export type BulkJobResponse = {
   jobId: string;
   name: string | null;
-  reacherJobId: string;
+  reacherJobId: string | null;
   status: BulkJobStatus | string;
   totalRecords: number;
   totalProcessed: number;
@@ -85,6 +87,34 @@ export type ApiKeyListResponse = {
 
 export type ApiKeyCreatedResponse = ApiKeyRecord & {
   key: string;
+};
+
+export type BillingEntry = {
+  id: string;
+  delta: number;
+  balanceAfter: number;
+  reason: string;
+  createdAt: string;
+};
+
+export type BillingAccountResponse = {
+  balance: number;
+  entries: BillingEntry[];
+};
+
+export type CheckoutResponse = {
+  url: string;
+};
+
+export type CheckoutConfirmStatus =
+  | "granted"
+  | "already_credited"
+  | "unpaid"
+  | "ignored";
+
+export type CheckoutConfirmResponse = {
+  status: CheckoutConfirmStatus;
+  balance: number;
 };
 
 export type BulkResultsResponse = {

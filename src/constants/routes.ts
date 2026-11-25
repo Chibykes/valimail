@@ -6,6 +6,8 @@ export const AppRoutes = {
   DASHBOARD_SINGLE: "/dashboard/single",
   DASHBOARD_LISTS: "/dashboard/lists",
   DASHBOARD_API: "/dashboard/api",
+  DASHBOARD_BILLING: "/dashboard/billing",
+  PRICING: "/pricing",
   DOCS: "/docs",
   dashboardJob: (jobId: string) => `/dashboard/lists/${jobId}`,
 } as const;
@@ -27,6 +29,9 @@ export const ApiRoutes = {
   CHECK_EMAIL: "/api/v1/check-email",
   BULK: "/api/v1/bulk",
   API_KEYS: "/api/v1/api-keys",
+  BILLING: "/api/v1/billing",
+  BILLING_CHECKOUT: "/api/v1/billing/checkout",
+  BILLING_CONFIRM: "/api/v1/billing/confirm",
   bulkJob: (jobId: string) => `/api/v1/bulk/${jobId}`,
   bulkResults: (jobId: string) => `/api/v1/bulk/${jobId}/results`,
   revokeApiKey: (id: string) => `/api/v1/api-keys/${id}/revoke`,

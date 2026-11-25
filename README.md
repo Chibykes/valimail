@@ -42,6 +42,8 @@ Copy values into `.env` for Compose and `.env.local` for `pnpm dev`. Do not comm
 | `RCH__FROM_EMAIL` | Reacher | MAIL FROM. Default `hello@chibykes.dev` |
 | `REACHER_PORT` | Host publish | Reacher HTTP. Default `8080`, bound to `127.0.0.1` |
 | `PORT` | Host publish | App port. Default `4455`, bound to `127.0.0.1` |
+| `STRIPE_SECRET_KEY` | Runtime | Stripe secret. Test key starts with `sk_test_` |
+| `STRIPE_WEBHOOK_SECRET` | Runtime | Signing secret for `POST /api/v1/stripe/webhook` |
 
 Changing a `NEXT_PUBLIC_*` value requires a new image build. Restarting the container is not enough.
 
@@ -136,7 +138,7 @@ Set `DEPLOY_PATH` to the real clone path, for example `/opt/valimail`.
 
 ### VPS `.env`
 
-Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, and `REACHER_HEADER_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
+Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
 
 Clerk Dashboard allowed origins and redirect URLs must include the public app URL. The process listens on **4455**, not 80. Put a reverse proxy on 80/443 in front of `127.0.0.1:4455` for a normal domain. Do not open 5433 to the internet.
 
@@ -160,6 +162,8 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./gha_deploy -N ""
 | `/dashboard/lists/[jobId]` | Bulk job progress, results, CSV export |
 | `/dashboard/single` | Single email validation |
 | `/dashboard/api` | Create and revoke API keys |
+| `/dashboard/billing` | Credit balance, ledger, and checkout |
+| `/pricing` | Public credit packs |
 | `/docs` | Public API integration guide |
 | `/api/v1/health` | Public liveness check. No auth |
 
@@ -214,8 +218,14 @@ Key folders:
 | `GET` | `/api/v1/api-keys` | List keys for the signed-in user. No secrets |
 | `POST` | `/api/v1/api-keys` | Body `{ name }`. Returns the `vm_live_` secret once |
 | `POST` | `/api/v1/api-keys/[id]/revoke` | Revoke a key you own |
+| `GET` | `/api/v1/billing` | Balance and recent ledger. Clerk session |
+| `POST` | `/api/v1/billing/checkout` | Body `{ planId }`. Returns `{ url }` for Stripe Checkout |
+| `POST` | `/api/v1/billing/confirm` | Body `{ sessionId }`. Retrieves the session from Stripe and grants credits once if it is paid |
+| `POST` | `/api/v1/stripe/webhook` | Public. Grants credits from a signed Stripe event |
 
-`POST /api/v1/check-email`, `POST /api/v1/bulk`, and the bulk status and results reads accept a Clerk session or an API key. Send `Authorization: Bearer vm_live_...` or `x-api-key`. Listing recent checks, listing jobs, and managing keys stay on the Clerk session.
+`POST /api/v1/check-email`, `POST /api/v1/bulk`, and the bulk status and results reads accept a Clerk session or an API key. Send `Authorization: Bearer vm_live_...` or `x-api-key`. Listing recent checks, listing jobs, managing keys, and billing stay on the Clerk session.
+
+One credit validates one address. A single check costs 1. A list costs its valid-address count and is rejected with 402 when the balance is short. Each account runs at most 5 lists at once. Extra lists stay `Pending` until a running list finishes. New accounts start at 0 credits.
 
 The secret is stored as a SHA-256 hash. It cannot be shown again. Full request shapes and a copyable agent prompt are on `/docs`.
 
@@ -231,6 +241,14 @@ npx -y clerk@latest doctor
 
 Sign-in and sign-up send the user to `/dashboard`.
 
-## Out of scope
+## Billing
 
-- Billing
+Stripe Checkout sells four one-time credit packs. Prices live in `src/constants/billing.ts`. The $5 / 1,000 pack is the base rate. Larger packs are discounted. Credits are added only after Stripe reports `payment_status=paid`. The webhook does that, and so does the billing page: it retrieves the Checkout session (or recent paid sessions for the customer) and grants once per session id. A second webhook or page load finds the existing ledger row and does not add credits again. `charge.refunded` reverses that grant without taking the balance below 0.
+
+Local webhook forwarding:
+
+```bash
+stripe listen --forward-to localhost:4455/api/v1/stripe/webhook
+```
+
+Use a test key (`sk_test_`) and card `4242 4242 4242 4242` until the Stripe account is activated for live charges.

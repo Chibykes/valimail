@@ -1,3 +1,4 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const skipTypecheck = process.env.SKIP_TYPECHECK === "1";
@@ -13,7 +14,20 @@ const nextConfig: NextConfig = {
     cpus: 1,
     webpackMemoryOptimizations: true,
   },
-  serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "pg"],
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "pg", "stripe"],
+  webpack: (config, { nextRuntime }) => {
+    if (nextRuntime === "edge") {
+      const stub = path.join(process.cwd(), "src/instrumentation.edge.ts");
+      config.resolve ??= {};
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        "@/instrumentation.node": stub,
+        [path.join(process.cwd(), "src/instrumentation.node.ts")]: stub,
+        [path.join(process.cwd(), "src/instrumentation.node")]: stub,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

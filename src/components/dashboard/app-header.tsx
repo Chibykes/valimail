@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
 import { DASHBOARD_NAV, DashboardNavKey } from "@/constants/navigation";
 import { AppRoutes } from "@/constants/routes";
+import { useBillingAccount } from "@/hooks/use-billing";
 import { cn } from "@/lib/utils";
 
 const NAV_ICONS = {
@@ -46,10 +47,25 @@ export function AppHeader() {
           })}
         </nav>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          <CreditBalance />
           <UserButton />
         </div>
       </div>
     </header>
+  );
+}
+
+function CreditBalance() {
+  const { data } = useBillingAccount();
+  const balance = data?.balance ?? 0;
+
+  return (
+    <Link
+      href={AppRoutes.DASHBOARD_BILLING}
+      className="rounded-full border border-border bg-surface px-3 py-1 text-sm font-medium tabular-nums text-foreground transition-colors hover:border-brand-300 hover:text-brand-700"
+    >
+      {balance.toLocaleString("en-US")} credits
+    </Link>
   );
 }

@@ -45,6 +45,7 @@ export function useCreateBulkJob() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QueryKeys.bulkJobs() });
+      void queryClient.invalidateQueries({ queryKey: QueryKeys.billing() });
     },
   });
 }

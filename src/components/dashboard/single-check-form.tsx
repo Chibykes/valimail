@@ -70,6 +70,7 @@ export function SingleCheckForm() {
           )}
         </Button>
       </form>
+      <p className="text-xs text-muted-foreground">Each check uses 1 credit.</p>
 
       {checkEmail.isPending ? <PendingCard /> : null}
       {checkEmail.data && !checkEmail.isPending ? (

@@ -88,8 +88,17 @@ x-api-key: ${API_KEY_PLACEHOLDER}`}
           Failed requests return{" "}
           <code className="font-mono text-foreground">{`{ "error": string, "details"?: unknown }`}</code>
           . 401 means the key is missing, revoked, or does not start with{" "}
-          {API_KEY_PREFIX}.
+          {API_KEY_PREFIX}. 402 means the balance cannot cover the check. A
+          list that does not fit is rejected whole.
         </p>
+        <pre className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed">
+          {`{
+  "error": "Not enough credits. This needs 500 and the balance is 120.",
+  "balance": 120,
+  "required": 500,
+  "details": "INSUFFICIENT_CREDITS"
+}`}
+        </pre>
       </section>
     </article>
   );

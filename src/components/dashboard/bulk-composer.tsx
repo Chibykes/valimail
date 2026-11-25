@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AppRoutes } from "@/constants/routes";
 import {
   DEFAULT_LIST_NAME,
+  BulkJobStatus,
   MAX_BULK_EMAILS,
   MAX_LIST_NAME_LENGTH,
 } from "@/constants/validation";
@@ -71,7 +72,11 @@ export function BulkComposer() {
         emails: valid,
         name: name.trim() || undefined,
       });
-      toast.success(`Validating ${valid.length} addresses`);
+      toast.success(
+        job.status === BulkJobStatus.PENDING
+          ? "Queued. It starts when another list finishes."
+          : `Validating ${valid.length} addresses`,
+      );
       router.push(AppRoutes.dashboardJob(job.jobId));
     } catch (error) {
       toast.error(ErrorMessageHelper.toMessage(error, "Failed to start validation"));
@@ -200,6 +205,7 @@ export function BulkComposer() {
           </span>{" "}
           valid
           {invalid.length ? ` · ${invalid.length} skipped` : ""}
+          {valid.length ? ` · ${valid.length.toLocaleString()} credits` : ""}
           {overLimit ? ` · max ${MAX_BULK_EMAILS.toLocaleString()}` : ""}
         </p>
         <Button

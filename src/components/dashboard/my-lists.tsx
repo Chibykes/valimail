@@ -82,7 +82,8 @@ export function MyLists() {
 }
 
 function ListRow({ job }: { job: BulkJobResponse }) {
-  const running = job.status !== BulkJobStatus.COMPLETED;
+  const pending = job.status === BulkJobStatus.PENDING;
+  const running = job.status === BulkJobStatus.RUNNING;
   const progress = BulkSummaryHelper.progressPercent(job.totalProcessed, job.totalRecords);
 
   return (
@@ -101,7 +102,9 @@ function ListRow({ job }: { job: BulkJobResponse }) {
           </p>
         </div>
         <div className="hidden w-48 items-center gap-3 sm:flex">
-          {running ? (
+          {pending ? (
+            <span className="ml-auto text-xs text-amber-700">Queued</span>
+          ) : running ? (
             <>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <div

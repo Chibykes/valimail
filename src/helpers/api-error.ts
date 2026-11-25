@@ -1,6 +1,7 @@
 import { AxiosError } from "axios";
 import { NextResponse } from "next/server";
 import { ErrorMessageHelper } from "@/helpers/error-message";
+import { InsufficientCreditsError } from "@/helpers/credit-error";
 import type { ApiErrorBody } from "@/types/api";
 
 export class ApiErrorHelper {
@@ -26,6 +27,18 @@ export class ApiErrorHelper {
 
   static notFound(message = "Not found") {
     return this.response(404, message);
+  }
+
+  static insufficientCredits(error: InsufficientCreditsError) {
+    return NextResponse.json(
+      {
+        error: error.message,
+        balance: error.balance,
+        required: error.required,
+        details: "INSUFFICIENT_CREDITS",
+      },
+      { status: 402 },
+    );
   }
 
   /** Overload used by route handlers: json(error, status, fallbackMessage) */
