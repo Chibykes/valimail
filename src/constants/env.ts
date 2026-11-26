@@ -19,6 +19,8 @@ export const EnvKeys = {
   CRYPTOMUS_PAYMENT_API_KEY: "CRYPTOMUS_PAYMENT_API_KEY",
   CRYPTOMUS_API_BASE: "CRYPTOMUS_API_BASE",
   CRYPTOMUS_WEBHOOK_URL: "CRYPTOMUS_WEBHOOK_URL",
+  RESEND_API_KEY: "RESEND_API_KEY",
+  APP_URL: "APP_URL",
 } as const;
 
 export function getEnv(key: string, fallback?: string): string {

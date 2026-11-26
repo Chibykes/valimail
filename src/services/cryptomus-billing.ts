@@ -3,6 +3,7 @@ import { ApiRoutes, AppRoutes } from "@/constants/routes";
 import { BillingHelper } from "@/helpers/billing";
 import { prisma } from "@/lib/prisma";
 import { CryptomusClient, type CryptomusPayment } from "@/lib/cryptomus";
+import { Mailer } from "@/lib/mail";
 import { CreditRepository } from "@/repositories/credit";
 import { NowPaymentsBilling } from "@/services/nowpayments-billing";
 import { UserService } from "@/services/user";
@@ -233,6 +234,12 @@ async function applyPayment(payment: CryptomusPayment): Promise<CheckoutConfirmS
       userId: invoice.userId,
       credits: plan.credits,
       invoiceId: invoice.id,
+    });
+    await Mailer.sendPaymentConfirmed({
+      userId: invoice.userId,
+      planId: plan.id,
+      credits: plan.credits,
+      priceCents: plan.priceCents,
     });
   }
   return result;

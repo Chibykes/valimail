@@ -2,6 +2,7 @@ import { getEmailValidationAdapter } from "@/adapters";
 import type { BulkJob } from "@/generated/prisma/client";
 import { BulkJobStatus, BULK_QUEUE_TICK_MS } from "@/constants/validation";
 import { ReachableHelper } from "@/helpers/reachable";
+import { Mailer } from "@/lib/mail";
 import { BulkJobRepository } from "@/repositories/bulk-job";
 import type { ReacherBulkStatusResponse } from "@/types/reacher";
 
@@ -94,10 +95,23 @@ export class BulkQueueService {
       if (!job.reacherJobId) continue;
       try {
         const remote = await adapter.getBulkStatus(job.reacherJobId);
-        await BulkJobRepository.updateFromStatus(
-          job.id,
-          BulkQueueService.remoteUpdate(job, remote),
-        );
+        const update = BulkQueueService.remoteUpdate(job, remote);
+        const finished =
+          job.status !== BulkJobStatus.COMPLETED &&
+          update.status === BulkJobStatus.COMPLETED;
+        await BulkJobRepository.updateFromStatus(job.id, update);
+        if (finished) {
+          await Mailer.sendBulkJobCompleted({
+            userId: job.userId,
+            jobId: job.id,
+            listName: job.name,
+            total: update.totalRecords,
+            safe: update.summarySafe,
+            risky: update.summaryRisky,
+            invalid: update.summaryInvalid,
+            unknown: update.summaryUnknown,
+          });
+        }
       } catch (error) {
         console.error("[bulk-queue] status failed", {
           jobId: job.id,

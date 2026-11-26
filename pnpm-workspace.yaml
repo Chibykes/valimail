@@ -1,6 +1,7 @@
 allowBuilds:
   '@prisma/engines': true
   core-js: true
+  esbuild: true
   prisma: true
 minimumReleaseAgeExclude:
   - '@tanstack/query-core@5.108.3'

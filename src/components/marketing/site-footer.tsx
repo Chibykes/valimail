@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Brand } from "@/constants/brand";
 import { MARKETING_NAV } from "@/constants/navigation";
+import { MailAddress } from "@/constants/mail";
 import { AppRoutes } from "@/constants/routes";
 
 export function SiteFooter() {
@@ -54,6 +55,11 @@ export function SiteFooter() {
               <Link href={AppRoutes.DOCS} className="hover:text-foreground">
                 API docs
               </Link>
+            </li>
+            <li>
+              <a href={`mailto:${MailAddress.SUPPORT}`} className="hover:text-foreground">
+                Support
+              </a>
             </li>
           </ul>
         </div>
