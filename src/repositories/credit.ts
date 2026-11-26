@@ -229,6 +229,107 @@ export class CreditRepository {
     return true;
   }
 
+  static async cryptomusGrantState(
+    invoiceId: string,
+  ): Promise<"granted" | "reversed" | "none"> {
+    const purchase = await prisma.creditLedger.findUnique({
+      where: { idempotencyKey: cryptomusPurchaseKey(invoiceId) },
+    });
+    if (!purchase) return "none";
+    const reversal = await prisma.creditLedger.findUnique({
+      where: { idempotencyKey: cryptomusReversalKey(invoiceId) },
+    });
+    return reversal ? "reversed" : "granted";
+  }
+
+  static async grantCryptomus(params: {
+    userId: string;
+    credits: number;
+    planId: string;
+    invoiceId: string;
+    paymentId: string;
+  }): Promise<"granted" | "already_credited"> {
+    const idempotencyKey = cryptomusPurchaseKey(params.invoiceId);
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const existing = await tx.creditLedger.findUnique({
+          where: { idempotencyKey },
+        });
+        if (existing) return "already_credited";
+
+        await CreditRepository.lockUser(tx, params.userId);
+        const updated = await tx.user.update({
+          where: { id: params.userId },
+          data: { creditBalance: { increment: params.credits } },
+        });
+        await tx.creditLedger.create({
+          data: {
+            userId: params.userId,
+            delta: params.credits,
+            balanceAfter: updated.creditBalance,
+            reason: CreditReason.PURCHASE,
+            referenceId: params.planId,
+            cryptomusPaymentId: params.paymentId,
+            idempotencyKey,
+          },
+        });
+        return "granted";
+      });
+    } catch (error) {
+      if (!isUniqueConstraint(error)) throw error;
+      const existing = await prisma.creditLedger.findFirst({
+        where: {
+          OR: [{ cryptomusPaymentId: params.paymentId }, { idempotencyKey }],
+        },
+      });
+      if (!existing) throw error;
+      return "already_credited";
+    }
+  }
+
+  static async reverseCryptomus(invoiceId: string) {
+    const purchase = await prisma.creditLedger.findUnique({
+      where: { idempotencyKey: cryptomusPurchaseKey(invoiceId) },
+    });
+    if (!purchase || purchase.reason !== CreditReason.PURCHASE || purchase.delta <= 0) {
+      return false;
+    }
+
+    const idempotencyKey = cryptomusReversalKey(invoiceId);
+    try {
+      await prisma.$transaction(async (tx) => {
+        const existing = await tx.creditLedger.findUnique({
+          where: { idempotencyKey },
+        });
+        if (existing) return;
+
+        const user = await CreditRepository.lockUser(tx, purchase.userId);
+        const clawback = Math.min(purchase.delta, Math.max(user.creditBalance, 0));
+        const updated = await tx.user.update({
+          where: { id: purchase.userId },
+          data: { creditBalance: { decrement: clawback } },
+        });
+        await tx.creditLedger.create({
+          data: {
+            userId: purchase.userId,
+            delta: -clawback,
+            balanceAfter: updated.creditBalance,
+            reason: CreditReason.REVERSAL,
+            referenceId: invoiceId,
+            idempotencyKey,
+          },
+        });
+      });
+    } catch (error) {
+      if (!isUniqueConstraint(error)) throw error;
+      const existing = await prisma.creditLedger.findUnique({
+        where: { idempotencyKey },
+      });
+      if (!existing) throw error;
+    }
+    return true;
+  }
+
   static async reversePurchase(paymentIntentId: string) {
     const purchase = await prisma.creditLedger.findUnique({
       where: { stripePaymentIntentId: paymentIntentId },
@@ -303,6 +404,14 @@ export class CreditRepository {
     }
     return user;
   }
+}
+
+function cryptomusPurchaseKey(invoiceId: string): string {
+  return `purchase:cm:${invoiceId}`;
+}
+
+function cryptomusReversalKey(invoiceId: string): string {
+  return `reversal:cm:${invoiceId}`;
 }
 
 function isUniqueConstraint(error: unknown): boolean {
