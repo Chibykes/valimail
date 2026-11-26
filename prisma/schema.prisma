@@ -33,6 +33,7 @@ model CreditLedger {
   stripeSessionId        String?  @unique
   stripePaymentIntentId  String?  @unique
   nowpaymentsPaymentId   String?  @unique
+  cryptomusPaymentId     String?  @unique
   idempotencyKey         String?  @unique
   createdAt              DateTime @default(now())
 
@@ -46,6 +47,7 @@ model CryptoInvoice {
   userId               String
   planId               String
   nowpaymentsInvoiceId String?  @unique
+  cryptomusUuid        String?  @unique
   paymentId            String?  @unique
   status               String   @default("created")
   createdAt            DateTime @default(now())

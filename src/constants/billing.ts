@@ -12,6 +12,7 @@ export type CreditReason = (typeof CreditReason)[keyof typeof CreditReason];
 export const LEDGER_PAGE_SIZE = 20;
 
 export const CREDIT_PLANS = [
+  { id: "test", credits: 200, priceCents: 100, discountPercent: 0 },
   { id: "starter", credits: 1_000, priceCents: 500, discountPercent: 0 },
   { id: "growth", credits: 5_000, priceCents: 2_000, discountPercent: 20 },
   { id: "scale", credits: 25_000, priceCents: 7_500, discountPercent: 40 },

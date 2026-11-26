@@ -6,6 +6,7 @@ import { BillingHelper } from "@/helpers/billing";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { CreditRepository } from "@/repositories/credit";
+import { CryptomusBilling } from "@/services/cryptomus-billing";
 import { NowPaymentsBilling } from "@/services/nowpayments-billing";
 import { UserService } from "@/services/user";
 import type { BillingAccountResponse } from "@/types/api";
@@ -32,6 +33,12 @@ export class BillingService {
       params.emailAddress,
     );
     await BillingService.reconcilePaidSessions(user);
+    await CryptomusBilling.reconcileUser(user.id).catch((error) => {
+      console.error("[cryptomus] reconcile failed", {
+        userId: user.id,
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    });
     await NowPaymentsBilling.reconcileUser(user.id).catch((error) => {
       console.error("[nowpayments] reconcile failed", {
         userId: user.id,
@@ -84,7 +91,7 @@ export class BillingService {
               description:
                 plan.discountPercent > 0
                   ? `${plan.discountPercent}% off the $5 per 1,000 base rate`
-                  : "1,000 credits at $5",
+                  : `${plan.credits.toLocaleString("en-US")} credits`,
             },
           },
         },

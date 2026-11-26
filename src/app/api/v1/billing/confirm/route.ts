@@ -3,9 +3,10 @@ import { ApiErrorHelper } from "@/helpers/api-error";
 import { AuthError, requireAuth } from "@/lib/auth/protect";
 import { BillingService, CheckoutOwnershipError } from "@/services/billing";
 import {
-  NowPaymentsBilling,
-  NowPaymentsOwnershipError,
-} from "@/services/nowpayments-billing";
+  CryptomusBilling,
+  CryptomusOwnershipError,
+} from "@/services/cryptomus-billing";
+import { NowPaymentsOwnershipError } from "@/services/nowpayments-billing";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
           emailAddress: authContext.email,
           sessionId,
         })
-      : await NowPaymentsBilling.confirmInvoice({
+      : await CryptomusBilling.confirmInvoice({
           clerkId: authContext.clerkId,
           emailAddress: authContext.email,
           invoiceId: sessionId,
@@ -32,7 +33,11 @@ export async function POST(request: NextRequest) {
     if (error instanceof AuthError) {
       return ApiErrorHelper.unauthorized(error.message);
     }
-    if (error instanceof CheckoutOwnershipError || error instanceof NowPaymentsOwnershipError) {
+    if (
+      error instanceof CheckoutOwnershipError ||
+      error instanceof CryptomusOwnershipError ||
+      error instanceof NowPaymentsOwnershipError
+    ) {
       return ApiErrorHelper.response(403, error.message);
     }
     if (error instanceof Error && error.message === "Invalid checkout session") {

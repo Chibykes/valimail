@@ -46,7 +46,11 @@ export function PlanGrid() {
                   : "bg-muted text-muted-foreground ring-border",
               )}
             >
-              {plan.discountPercent > 0 ? `${plan.discountPercent}% off` : "Base rate"}
+              {plan.id === "test"
+                ? "Test"
+                : plan.discountPercent > 0
+                  ? `${plan.discountPercent}% off`
+                  : "Base rate"}
             </span>
             <p className="font-display text-2xl font-semibold tracking-tight">
               {plan.credits.toLocaleString("en-US")} credits
