@@ -53,6 +53,8 @@ Copy values into `.env` for Compose and `.env.local` for `pnpm dev`. Do not comm
 | `CRYPTOMUS_PAYMENT_API_KEY` | Runtime | Payment API key. Signs invoices and webhooks |
 | `CRYPTOMUS_API_BASE` | Runtime | Default `https://api.cryptomus.com/v1` |
 | `CRYPTOMUS_WEBHOOK_URL` | Runtime | Optional full callback URL. Set this when checkout runs on localhost |
+| `RESEND_API_KEY` | Runtime | Sends payment and finished-list mail. Mail is skipped when this is unset |
+| `APP_URL` | Runtime | Public site origin for links inside those emails, such as `https://valimail.dscrdbots.cc` |
 | `ADMIN_PASSWORD_HASH` | Runtime | Scrypt hash for `/admin`. Never the raw password |
 | `ADMIN_SESSION_SECRET` | Runtime | HMAC secret for the admin session cookie |
 
@@ -149,7 +151,7 @@ Set `DEPLOY_PATH` to the real clone path, for example `/opt/valimail`.
 
 ### VPS `.env`
 
-Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CRYPTOMUS_MERCHANT_ID`, `CRYPTOMUS_PAYMENT_API_KEY`, `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `NOWPAYMENTS_EMAIL`, `NOWPAYMENTS_PASSWORD`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
+Runtime only: `CLERK_SECRET_KEY`, `POSTGRES_*`, `REACHER_HEADER_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CRYPTOMUS_MERCHANT_ID`, `CRYPTOMUS_PAYMENT_API_KEY`, `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `NOWPAYMENTS_EMAIL`, `NOWPAYMENTS_PASSWORD`, `RESEND_API_KEY`, `APP_URL`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET`. Compose overwrites `DATABASE_URL` to the `postgres` service and `REACHER_BASE_URL` to `http://reacher:8080`.
 
 Clerk Dashboard allowed origins and redirect URLs must include the public app URL. The process listens on **4455**, not 80. Put a reverse proxy on 80/443 in front of `127.0.0.1:4455` for a normal domain. Do not open 5433 to the internet.
 
@@ -258,6 +260,8 @@ Sign-in and sign-up send the user to `/dashboard`.
 ## Billing
 
 Buy credits opens a Cryptomus invoice priced in USD. The customer chooses the coin on that page. Prices live in `src/constants/billing.ts`. The $5 / 1,000 pack is the base rate. Larger packs are discounted.
+
+A confirmed payment sends one receipt from `support@valimail.dscrdbots.cc`. A reply to that message is a dispute. A finished list sends one notice from `no-reply@valimail.dscrdbots.cc`. Resend must allow both addresses on `valimail.dscrdbots.cc`. Preview the templates with `pnpm email:dev`.
 
 Credits are added only when a signed callback reports `paid` or `paid_over` for that invoice. A second callback finds the existing ledger row and does not add credits again. `refund_paid` reverses that grant without taking the balance below 0. The billing page can recover a missed real callback by reading the invoice. Cryptomus has no sandbox. Their webhook tester does not update the invoice, so a test `paid` callback is what grants credits in development. The tester URL is limited to 150 characters.
 

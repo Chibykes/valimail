@@ -5,6 +5,7 @@ import { AppRoutes } from "@/constants/routes";
 import { BillingHelper } from "@/helpers/billing";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { Mailer } from "@/lib/mail";
 import { CreditRepository } from "@/repositories/credit";
 import { CryptomusBilling } from "@/services/cryptomus-billing";
 import { NowPaymentsBilling } from "@/services/nowpayments-billing";
@@ -227,6 +228,12 @@ export class BillingService {
         userId: user.id,
         credits: plan.credits,
         sessionId: session.id,
+      });
+      await Mailer.sendPaymentConfirmed({
+        userId: user.id,
+        planId: plan.id,
+        credits: plan.credits,
+        priceCents: plan.priceCents,
       });
     }
     return result;

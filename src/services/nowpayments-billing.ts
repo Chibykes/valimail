@@ -2,6 +2,7 @@ import { AppRoutes } from "@/constants/routes";
 import { BillingHelper } from "@/helpers/billing";
 import { prisma } from "@/lib/prisma";
 import { NowPaymentsClient, type NowPayment } from "@/lib/nowpayments";
+import { Mailer } from "@/lib/mail";
 import { CreditRepository } from "@/repositories/credit";
 import { UserService } from "@/services/user";
 import type { CheckoutConfirmStatus } from "@/types/api";
@@ -201,6 +202,12 @@ async function applyPayment(payment: NowPayment): Promise<CheckoutConfirmStatus>
       userId: invoice.userId,
       credits: plan.credits,
       paymentId,
+    });
+    await Mailer.sendPaymentConfirmed({
+      userId: invoice.userId,
+      planId: plan.id,
+      credits: plan.credits,
+      priceCents: plan.priceCents,
     });
   }
   return result;
